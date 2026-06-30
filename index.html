@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Camp — Ironwilled</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@400;500;600;700&family=Hanken+Grotesk:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="page">
+  <div class="screen">
+
+    <!-- ===================== HEADER ===================== -->
+    <header class="header">
+      <span class="dagger-icon dagger-icon--brand"></span>
+      <span class="eyebrow">Ironwilled</span>
+      <h1 class="title">Camp</h1>
+      <span class="day-line" id="dayLine"></span>
+    </header>
+
+    <!-- ===================== STREAK ===================== -->
+    <section class="streak">
+      <span class="streak-number" id="streakNumber"></span>
+      <span class="streak-label">Day Streak</span>
+    </section>
+
+    <!-- ===================== CHECKLIST ===================== -->
+    <section class="checklist-section">
+      <div class="section-row">
+        <span class="section-label">Today's Non-Negotiables</span>
+        <span class="done-count" id="doneCount"></span>
+      </div>
+
+      <div class="checklist" id="checklist"></div>
+    </section>
+
+    <!-- ===================== 30-DAY LOG ===================== -->
+    <section class="log-section">
+      <div class="section-row">
+        <span class="section-label" id="logTitle"></span>
+        <span class="log-count" id="logCount"></span>
+      </div>
+
+      <div class="log-grid" id="logGrid"></div>
+
+      <div class="legend" id="legend">
+        <span class="legend-item">
+          <span class="legend-swatch legend-swatch--complete"></span>
+          <span class="legend-text">Complete</span>
+        </span>
+        <span class="legend-item">
+          <span class="legend-swatch legend-swatch--missed"></span>
+          <span class="legend-text">Missed</span>
+        </span>
+        <span class="legend-item">
+          <span class="legend-swatch legend-swatch--upcoming"></span>
+          <span class="legend-text">Upcoming</span>
+        </span>
+        <span class="legend-item">
+          <span class="legend-swatch legend-swatch--today"></span>
+          <span class="legend-text">Today</span>
+        </span>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
