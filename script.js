@@ -45,8 +45,20 @@
     localStorage.setItem(key, JSON.stringify(value));
   }
 
+  // ?asOf=YYYY-MM-DD lets a real visitor URL preview any program day for
+  // testing, without touching the system clock. Absent, behavior is
+  // identical to plain `new Date()`.
+  function resolveToday() {
+    const override = new URLSearchParams(location.search).get('asOf');
+    if (override) {
+      const parsed = new Date(`${override}T00:00:00`);
+      if (!isNaN(parsed)) return startOfDay(parsed);
+    }
+    return startOfDay(new Date());
+  }
+
   const campStartDay = startOfDay(CAMP_START);
-  const today = startOfDay(new Date());
+  const today = resolveToday();
   const dayOffset = Math.round((today - campStartDay) / 86400000); // 0 === program day 1
 
   const isPreLaunch = dayOffset < 0;
