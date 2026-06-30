@@ -70,6 +70,27 @@
   </div>
 </div>
 
+<!-- ===================== COMPLETION TOAST ===================== -->
+<div class="camp-toast" id="campToast" role="status" aria-live="polite">
+  <span class="camp-toast__accent"></span>
+  <span class="camp-toast__copy">
+    <span class="camp-toast__text">Day forged.</span>
+    <span class="camp-toast__streak" id="campToastStreak"></span>
+  </span>
+</div>
+
+<!-- ===================== YESTERDAY HONESTY PROMPT ===================== -->
+<div class="camp-overlay" id="honestyOverlay" hidden>
+  <div class="camp-dialog" role="dialog" aria-modal="true" aria-labelledby="honestyQuestion">
+    <span class="camp-dialog__eyebrow">Yesterday</span>
+    <p class="camp-dialog__question" id="honestyQuestion">Did you complete all six?</p>
+    <div class="camp-dialog__actions">
+      <button type="button" class="camp-dialog__btn" id="honestyYes">Yes</button>
+      <button type="button" class="camp-dialog__btn camp-dialog__btn--ghost" id="honestyNo">No</button>
+    </div>
+  </div>
+</div>
+
 <script src="script.js"></script>
 </body>
 </html>
