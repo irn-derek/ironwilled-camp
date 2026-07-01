@@ -36,6 +36,10 @@
       </div>
 
       <div class="checklist" id="checklist"></div>
+
+      <button type="button" class="camp-advance-btn" id="advanceDayBtn" hidden>
+        Advance to Day <span id="advanceDayNum"></span>
+      </button>
     </section>
 
     <!-- ===================== 30-DAY LOG ===================== -->
@@ -82,7 +86,7 @@
 <!-- ===================== YESTERDAY HONESTY PROMPT ===================== -->
 <div class="camp-overlay" id="honestyOverlay" hidden>
   <div class="camp-dialog" role="dialog" aria-modal="true" aria-labelledby="honestyQuestion">
-    <span class="camp-dialog__eyebrow">Yesterday</span>
+    <span class="camp-dialog__eyebrow" id="honestyEyebrow">Yesterday</span>
     <p class="camp-dialog__question" id="honestyQuestion">Did you complete all six?</p>
     <div class="camp-dialog__actions">
       <button type="button" class="camp-dialog__btn" id="honestyYes">Yes</button>

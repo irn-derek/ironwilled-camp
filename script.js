@@ -15,7 +15,12 @@
 
   const DAYS_KEY = 'camp:days:v1';
   const ASKED_KEY = 'camp:asked:v1';
+  const POINTER_KEY = 'camp:pointer:v1';
 
+  // Every date helper below uses local getters/constructors (getFullYear,
+  // getMonth, getDate, setDate, the multi-arg Date constructor) — never
+  // getUTC*, never a bare "YYYY-MM-DD" string (which Date parses as UTC
+  // midnight). That keeps "today" anchored to the visitor's own clock.
   function startOfDay(date) {
     return new Date(date.getFullYear(), date.getMonth(), date.getDate());
   }
@@ -47,7 +52,8 @@
 
   // ?asOf=YYYY-MM-DD lets a real visitor URL preview any program day for
   // testing, without touching the system clock. Absent, behavior is
-  // identical to plain `new Date()`.
+  // identical to plain `new Date()`. Read fresh every call (not cached) so
+  // a tab left open still sees the real date change at midnight.
   function resolveToday() {
     const override = new URLSearchParams(location.search).get('asOf');
     if (override) {
@@ -58,13 +64,10 @@
   }
 
   const campStartDay = startOfDay(CAMP_START);
-  const today = resolveToday();
-  const dayOffset = Math.round((today - campStartDay) / 86400000); // 0 === program day 1
 
-  const isPreLaunch = dayOffset < 0;
-  const daysUntilStart = isPreLaunch ? -dayOffset : 0;
-  const todayIndex = Math.max(0, Math.min(dayOffset, PROGRAM_LENGTH - 1));
-  const todayKey = dateKey(today);
+  function realDayOffset() {
+    return Math.round((resolveToday() - campStartDay) / 86400000); // 0 === program day 1
+  }
 
   function dateKeyForIndex(index) {
     return dateKey(addDays(campStartDay, index));
@@ -72,11 +75,21 @@
 
   let days = loadJSON(DAYS_KEY);
   let asked = loadJSON(ASKED_KEY);
+  let pointer = Object.assign({ manualOffset: null, lastSeenIndex: null }, loadJSON(POINTER_KEY));
+
+  function persistPointer() {
+    saveJSON(POINTER_KEY, pointer);
+  }
+
+  // Recomputed every sync() call, never cached across a day boundary.
+  let isPreLaunch = false;
+  let daysUntilStart = 0;
+  let todayIndex = 0;
+  let todayKey = '';
+  let honestyQueue = [];
 
   const state = {
-    checked: (days[todayKey] && days[todayKey].checked)
-      ? days[todayKey].checked.slice()
-      : [false, false, false, false, false, false],
+    checked: [false, false, false, false, false, false],
   };
 
   const els = {
@@ -91,9 +104,17 @@
     toast: document.getElementById('campToast'),
     toastStreak: document.getElementById('campToastStreak'),
     honestyOverlay: document.getElementById('honestyOverlay'),
+    honestyEyebrow: document.getElementById('honestyEyebrow'),
     honestyYes: document.getElementById('honestyYes'),
     honestyNo: document.getElementById('honestyNo'),
+    advanceBtn: document.getElementById('advanceDayBtn'),
+    advanceDayNum: document.getElementById('advanceDayNum'),
   };
+
+  function loadTodayChecked() {
+    const rec = days[todayKey];
+    state.checked = rec ? rec.checked.slice() : [false, false, false, false, false, false];
+  }
 
   function persistToday() {
     days[todayKey] = { checked: state.checked.slice() };
@@ -103,6 +124,10 @@
   function recordDone(index) {
     const rec = days[dateKeyForIndex(index)];
     return rec ? rec.checked.filter(Boolean).length : 0;
+  }
+
+  function isDayComplete(index) {
+    return recordDone(index) === 6;
   }
 
   // Days with no stored record are "upcoming" rather than "missed" — we have
@@ -118,10 +143,50 @@
   function historicalStreak() {
     let streak = 0;
     for (let d = todayIndex - 1; d >= 0; d--) {
-      if (recordDone(d) === 6) streak++;
+      if (isDayComplete(d)) streak++;
       else break;
     }
     return streak;
+  }
+
+  // Any day between the last day the tracker actually showed and the new
+  // current day — whether that gap opened because the calendar rolled over
+  // (possibly by more than one day), or because the user manually advanced —
+  // gets queued for an honesty check if it wasn't completed and hasn't been
+  // asked about yet.
+  function queueGapDays(fromIndex, toIndex) {
+    for (let d = fromIndex; d < toIndex; d++) {
+      const key = dateKeyForIndex(d);
+      if (!isDayComplete(d) && !asked[key]) {
+        honestyQueue.push({ key, index: d });
+      }
+    }
+  }
+
+  // Recomputes the effective "current day" from the real calendar date and
+  // any manual advance, and detects/queues any gap that opened since the
+  // tracker was last shown. Safe to call repeatedly (on load, on an
+  // interval, on tab focus) — a no-op if nothing has changed.
+  function sync() {
+    const real = realDayOffset();
+    const raw = pointer.manualOffset != null ? Math.max(real, pointer.manualOffset) : real;
+
+    isPreLaunch = raw < 0;
+    daysUntilStart = isPreLaunch ? -raw : 0;
+    todayIndex = Math.max(0, Math.min(raw, PROGRAM_LENGTH - 1));
+    todayKey = dateKeyForIndex(todayIndex);
+
+    if (pointer.lastSeenIndex === null) {
+      // First-ever visit: nothing to audit, just record where we start.
+      pointer.lastSeenIndex = todayIndex;
+      persistPointer();
+    } else if (!isPreLaunch && todayIndex > pointer.lastSeenIndex) {
+      queueGapDays(pointer.lastSeenIndex, todayIndex);
+      pointer.lastSeenIndex = todayIndex;
+      persistPointer();
+    }
+
+    loadTodayChecked();
   }
 
   let toastTimer = null;
@@ -135,6 +200,31 @@
     els.toast.classList.remove('is-visible');
   }
 
+  function processHonestyQueue() {
+    if (honestyQueue.length === 0) {
+      els.honestyOverlay.hidden = true;
+      return;
+    }
+    const item = honestyQueue[0];
+    els.honestyEyebrow.textContent = `Day ${item.index + 1}`;
+    els.honestyOverlay.hidden = false;
+
+    const resolve = (completed) => {
+      if (completed) {
+        days[item.key] = { checked: [true, true, true, true, true, true] };
+        saveJSON(DAYS_KEY, days);
+      }
+      asked[item.key] = true;
+      saveJSON(ASKED_KEY, asked);
+      honestyQueue.shift();
+      processHonestyQueue();
+      render();
+    };
+
+    els.honestyYes.onclick = () => resolve(true);
+    els.honestyNo.onclick = () => resolve(false);
+  }
+
   function toggle(index) {
     const prevDone = state.checked.filter(Boolean).length;
     state.checked[index] = !state.checked[index];
@@ -146,13 +236,24 @@
     }
   }
 
+  function advanceDay() {
+    if (state.checked.filter(Boolean).length !== 6) return;
+    if (todayIndex >= PROGRAM_LENGTH - 1) return;
+    persistToday();
+    const next = todayIndex + 1;
+    pointer.manualOffset = pointer.manualOffset != null ? Math.max(pointer.manualOffset, next) : next;
+    persistPointer();
+    sync();
+    processHonestyQueue();
+    render();
+  }
+
   function buildChecklist() {
     els.checklist.innerHTML = '';
     HABITS.forEach((habit, i) => {
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'checklist-item';
-      button.disabled = isPreLaunch;
       button.innerHTML = `
         <span class="checklist-item__accent"></span>
         <span class="checklist-item__box">
@@ -190,6 +291,7 @@
 
     [...els.checklist.children].forEach((item, i) => {
       item.classList.toggle('is-checked', !!state.checked[i]);
+      item.disabled = isPreLaunch;
     });
 
     els.logGrid.innerHTML = '';
@@ -200,34 +302,32 @@
       if (!isPreLaunch && d === todayIndex) cell.classList.add('log-cell--today');
       els.logGrid.appendChild(cell);
     }
+
+    const canAdvance = !isPreLaunch && doneToday === 6 && todayIndex < PROGRAM_LENGTH - 1;
+    els.advanceBtn.hidden = !canAdvance;
+    if (canAdvance) els.advanceDayNum.textContent = String(todayIndex + 2);
   }
 
-  function maybePromptYesterdayHonesty() {
-    if (isPreLaunch || todayIndex - 1 < 0) return;
-    const yesterdayKey = dateKeyForIndex(todayIndex - 1);
-    const rec = days[yesterdayKey];
-    if (!rec || asked[yesterdayKey]) return;
-    if (rec.checked.filter(Boolean).length === 6) return;
-
-    els.honestyOverlay.hidden = false;
-
-    const resolve = (completed) => {
-      if (completed) {
-        days[yesterdayKey] = { checked: [true, true, true, true, true, true] };
-        saveJSON(DAYS_KEY, days);
-      }
-      asked[yesterdayKey] = true;
-      saveJSON(ASKED_KEY, asked);
-      els.honestyOverlay.hidden = true;
-      render();
-    };
-
-    els.honestyYes.onclick = () => resolve(true);
-    els.honestyNo.onclick = () => resolve(false);
+  function recheck() {
+    sync();
+    render();
+    processHonestyQueue();
   }
 
   buildChecklist();
+  sync();
   render();
+  processHonestyQueue();
+
   els.toast.addEventListener('click', hideToast);
-  maybePromptYesterdayHonesty();
+  els.advanceBtn.addEventListener('click', advanceDay);
+
+  // Catches a calendar rollover while the tab stays open — a light polling
+  // safety net plus an immediate recheck when the tab regains focus/visibility,
+  // since backgrounded-tab timers are commonly throttled by the browser.
+  setInterval(recheck, 30000);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) recheck();
+  });
+  window.addEventListener('focus', recheck);
 })();

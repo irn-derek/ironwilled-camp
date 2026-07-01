@@ -264,6 +264,28 @@ button { font-family: inherit; }
   cursor: not-allowed;
 }
 
+.camp-advance-btn {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 14px 16px;
+  background: transparent;
+  color: var(--camp-bone);
+  border: 1px solid var(--camp-green);
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-align: center;
+  cursor: pointer;
+  animation: camp-up 220ms var(--ease);
+  transition: background-color 200ms var(--ease), opacity 200ms var(--ease);
+}
+
+.camp-advance-btn:hover { background: rgba(95, 133, 89, 0.12); }
+.camp-advance-btn:active { opacity: 0.7; }
+
 /* ===================== 30-DAY LOG ===================== */
 .log-grid {
   display: grid;
