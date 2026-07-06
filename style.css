@@ -429,7 +429,19 @@ button { font-family: inherit; }
   border: 1px solid rgba(233, 225, 207, 0.14);
   border-radius: 6px;
   padding: 28px 24px;
+}
+
+/* Re-added by JS on every queued item (not just first mount) so consecutive
+   unresolved days each read as a new prompt rather than a stuck repeat. */
+.camp-dialog.is-entering {
   animation: camp-up 220ms var(--ease);
+}
+
+.camp-dialog__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 10px;
 }
 
 .camp-dialog__eyebrow {
@@ -439,7 +451,13 @@ button { font-family: inherit; }
   letter-spacing: 0.3em;
   text-transform: uppercase;
   color: var(--camp-tan);
-  margin-bottom: 10px;
+}
+
+.camp-dialog__progress {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--camp-green);
 }
 
 .camp-dialog__question {

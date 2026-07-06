@@ -87,6 +87,7 @@
   let todayIndex = 0;
   let todayKey = '';
   let honestyQueue = [];
+  let honestyBatchTotal = 0;
 
   const state = {
     checked: [false, false, false, false, false, false],
@@ -104,7 +105,9 @@
     toast: document.getElementById('campToast'),
     toastStreak: document.getElementById('campToastStreak'),
     honestyOverlay: document.getElementById('honestyOverlay'),
+    honestyDialog: document.getElementById('honestyDialog'),
     honestyEyebrow: document.getElementById('honestyEyebrow'),
+    honestyProgress: document.getElementById('honestyProgress'),
     honestyYes: document.getElementById('honestyYes'),
     honestyNo: document.getElementById('honestyNo'),
     advanceBtn: document.getElementById('advanceDayBtn'),
@@ -155,12 +158,14 @@
   // gets queued for an honesty check if it wasn't completed and hasn't been
   // asked about yet.
   function queueGapDays(fromIndex, toIndex) {
+    const before = honestyQueue.length;
     for (let d = fromIndex; d < toIndex; d++) {
       const key = dateKeyForIndex(d);
       if (!isDayComplete(d) && !asked[key]) {
         honestyQueue.push({ key, index: d });
       }
     }
+    honestyBatchTotal += honestyQueue.length - before;
   }
 
   // Recomputes the effective "current day" from the real calendar date and
@@ -203,11 +208,19 @@
   function processHonestyQueue() {
     if (honestyQueue.length === 0) {
       els.honestyOverlay.hidden = true;
+      honestyBatchTotal = 0;
       return;
     }
     const item = honestyQueue[0];
+    const position = honestyBatchTotal - honestyQueue.length + 1;
     els.honestyEyebrow.textContent = `Day ${item.index + 1}`;
+    els.honestyProgress.textContent = honestyBatchTotal > 1 ? `${position} of ${honestyBatchTotal}` : '';
     els.honestyOverlay.hidden = false;
+    // Re-trigger the entry fade on every item so consecutive queued days each
+    // read as a new prompt, not a stuck repeat of the last one.
+    els.honestyDialog.classList.remove('is-entering');
+    void els.honestyDialog.offsetWidth;
+    els.honestyDialog.classList.add('is-entering');
 
     const resolve = (completed) => {
       if (completed) {

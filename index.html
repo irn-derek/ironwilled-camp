@@ -83,10 +83,13 @@
   </span>
 </div>
 
-<!-- ===================== YESTERDAY HONESTY PROMPT ===================== -->
+<!-- ===================== HONESTY PROMPT (one per unresolved day) ===================== -->
 <div class="camp-overlay" id="honestyOverlay" hidden>
-  <div class="camp-dialog" role="dialog" aria-modal="true" aria-labelledby="honestyQuestion">
-    <span class="camp-dialog__eyebrow" id="honestyEyebrow">Yesterday</span>
+  <div class="camp-dialog" id="honestyDialog" role="dialog" aria-modal="true" aria-labelledby="honestyQuestion">
+    <div class="camp-dialog__head">
+      <span class="camp-dialog__eyebrow" id="honestyEyebrow">Yesterday</span>
+      <span class="camp-dialog__progress" id="honestyProgress"></span>
+    </div>
     <p class="camp-dialog__question" id="honestyQuestion">Did you complete all six?</p>
     <div class="camp-dialog__actions">
       <button type="button" class="camp-dialog__btn" id="honestyYes">Yes</button>
