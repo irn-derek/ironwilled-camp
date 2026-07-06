@@ -1,7 +1,7 @@
 (() => {
   // Single source of truth for program dates — every other date in this file
   // is derived from CAMP_START, nothing else is hardcoded.
-  const CAMP_START = new Date(2026, 7, 1); // August 1, 2026
+  const CAMP_START = new Date(2026, 6, 6); // July 6, 2026 — live now
   const PROGRAM_LENGTH = 30;
 
   const HABITS = [
