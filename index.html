@@ -8,6 +8,15 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@400;500;600;700&family=Hanken+Grotesk:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
+<script>
+  // Applied before first paint so a saved theme never flashes the default on load.
+  (function () {
+    try {
+      var t = localStorage.getItem('camp:theme:v1');
+      if (t === 'light' || t === 'stealth') document.documentElement.setAttribute('data-theme', t);
+    } catch (e) {}
+  })();
+</script>
 </head>
 <body>
 
@@ -73,6 +82,11 @@
 
     <!-- ===================== FOOTER ===================== -->
     <footer class="camp-footer">
+      <div class="camp-theme-switch" id="themeSwitch" role="group" aria-label="Theme">
+        <button type="button" class="camp-theme-btn" data-theme-choice="dark">Dark</button>
+        <button type="button" class="camp-theme-btn" data-theme-choice="light">Light</button>
+        <button type="button" class="camp-theme-btn" data-theme-choice="stealth">Stealth</button>
+      </div>
       <button type="button" class="camp-reset-btn" id="resetBtn">Reset Progress</button>
     </footer>
 

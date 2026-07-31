@@ -124,7 +124,35 @@
     advanceBtn: document.getElementById('advanceDayBtn'),
     advanceDayNum: document.getElementById('advanceDayNum'),
     resetBtn: document.getElementById('resetBtn'),
+    themeButtons: document.querySelectorAll('.camp-theme-btn'),
   };
+
+  const THEME_KEY = 'camp:theme:v1';
+  const THEMES = ['dark', 'light', 'stealth'];
+
+  function loadTheme() {
+    try {
+      const stored = localStorage.getItem(THEME_KEY);
+      return THEMES.includes(stored) ? stored : 'dark';
+    } catch (e) {
+      return 'dark';
+    }
+  }
+
+  function applyTheme(theme) {
+    if (theme === 'dark') document.documentElement.removeAttribute('data-theme');
+    else document.documentElement.setAttribute('data-theme', theme);
+    els.themeButtons.forEach((btn) => {
+      btn.classList.toggle('is-active', btn.dataset.themeChoice === theme);
+    });
+  }
+
+  function setTheme(theme) {
+    try {
+      localStorage.setItem(THEME_KEY, theme);
+    } catch (e) {}
+    applyTheme(theme);
+  }
 
   function loadTodayChecked() {
     const rec = days[todayKey];
@@ -344,10 +372,14 @@
   sync();
   render();
   processHonestyQueue();
+  applyTheme(loadTheme());
 
   els.toast.addEventListener('click', hideToast);
   els.advanceBtn.addEventListener('click', advanceDay);
   els.resetBtn.addEventListener('click', resetProgram);
+  els.themeButtons.forEach((btn) => {
+    btn.addEventListener('click', () => setTheme(btn.dataset.themeChoice));
+  });
 
   // Catches a calendar rollover while the tab stays open — a light polling
   // safety net plus an immediate recheck when the tab regains focus/visibility,

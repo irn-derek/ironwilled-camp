@@ -1,17 +1,50 @@
 :root {
-  --camp-bg: #100E0B;
-  --camp-card-bg: #15110A;
-  --camp-cell-missed: #1F1A12;
-  --camp-bone: #E9E1CF;
-  --camp-tan: #8B8472;
-  --camp-green: #5F8559;
-  --camp-ink: #120F09;
-
   --font-display: 'Saira Condensed', sans-serif;
   --font-body: 'Hanken Grotesk', sans-serif;
   --font-mono: 'DM Mono', monospace;
 
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Default (no data-theme attribute) and explicit dark both resolve here. */
+:root,
+[data-theme="dark"] {
+  --camp-bg: #100E0B;
+  --camp-bg-rgb: 16, 14, 11;
+  --camp-card-bg: #15110A;
+  --camp-cell-missed: #1F1A12;
+  --camp-bone: #E9E1CF;
+  --camp-bone-rgb: 233, 225, 207;
+  --camp-tan: #8B8472;
+  --camp-accent: #5F8559;
+  --camp-accent-rgb: 95, 133, 89;
+  --camp-ink: #120F09;
+}
+
+[data-theme="light"] {
+  --camp-bg: #F3EEE1;
+  --camp-bg-rgb: 243, 238, 225;
+  --camp-card-bg: #FAF6EA;
+  --camp-cell-missed: #E3DCC8;
+  --camp-bone: #1E1A12;
+  --camp-bone-rgb: 30, 26, 18;
+  --camp-tan: #7C7360;
+  --camp-accent: #4F7548;
+  --camp-accent-rgb: 79, 117, 72;
+  --camp-ink: #F5F2E8;
+}
+
+[data-theme="stealth"] {
+  --camp-bg: #18191B;
+  --camp-bg-rgb: 24, 25, 27;
+  --camp-card-bg: #1F2022;
+  --camp-cell-missed: #26272A;
+  --camp-bone: #D6D8DA;
+  --camp-bone-rgb: 214, 216, 218;
+  --camp-tan: #85888C;
+  --camp-accent: #9AA0A6;
+  --camp-accent-rgb: 154, 160, 166;
+  --camp-ink: #101113;
 }
 
 * , *::before, *::after { box-sizing: border-box; }
@@ -23,6 +56,7 @@ html, body {
 
 body {
   font-family: var(--font-body);
+  transition: background-color 200ms var(--ease);
 }
 
 button { font-family: inherit; }
@@ -38,6 +72,7 @@ button { font-family: inherit; }
   background: var(--camp-bg);
   display: flex;
   justify-content: center;
+  transition: background-color 200ms var(--ease);
 }
 
 .screen {
@@ -102,8 +137,8 @@ button { font-family: inherit; }
 /* ===================== STREAK ===================== */
 .streak {
   margin-top: 38px;
-  border-top: 1px solid rgba(233, 225, 207, 0.12);
-  border-bottom: 1px solid rgba(233, 225, 207, 0.12);
+  border-top: 1px solid rgba(var(--camp-bone-rgb), 0.12);
+  border-bottom: 1px solid rgba(var(--camp-bone-rgb), 0.12);
   padding: 26px 0 24px;
   display: flex;
   flex-direction: column;
@@ -153,7 +188,7 @@ button { font-family: inherit; }
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.1em;
-  color: var(--camp-green);
+  color: var(--camp-accent);
 }
 
 .log-count {
@@ -179,7 +214,7 @@ button { font-family: inherit; }
   text-align: left;
   padding: 15px 16px;
   background: var(--camp-card-bg);
-  border: 1px solid rgba(233, 225, 207, 0.09);
+  border: 1px solid rgba(var(--camp-bone-rgb), 0.09);
   border-radius: 6px;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -192,7 +227,7 @@ button { font-family: inherit; }
   top: 9px;
   bottom: 9px;
   width: 2px;
-  background: var(--camp-green);
+  background: var(--camp-accent);
   opacity: 0;
   transition: opacity 250ms var(--ease);
 }
@@ -207,14 +242,14 @@ button { font-family: inherit; }
   width: 26px;
   height: 26px;
   border-radius: 6px;
-  border: 1px solid rgba(233, 225, 207, 0.22);
+  border: 1px solid rgba(var(--camp-bone-rgb), 0.22);
 }
 
 .checklist-item__fill {
   position: absolute;
   inset: 0;
   border-radius: 6px;
-  background: var(--camp-green);
+  background: var(--camp-accent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -266,7 +301,7 @@ button { font-family: inherit; }
   padding: 14px 16px;
   background: transparent;
   color: var(--camp-bone);
-  border: 1px solid var(--camp-green);
+  border: 1px solid var(--camp-accent);
   border-radius: 6px;
   font-family: var(--font-mono);
   font-size: 12px;
@@ -278,7 +313,7 @@ button { font-family: inherit; }
   transition: background-color 200ms var(--ease), opacity 200ms var(--ease);
 }
 
-.camp-advance-btn:hover { background: rgba(95, 133, 89, 0.12); }
+.camp-advance-btn:hover { background: rgba(var(--camp-accent-rgb), 0.12); }
 .camp-advance-btn:active { opacity: 0.7; }
 
 /* ===================== 30-DAY LOG ===================== */
@@ -297,9 +332,9 @@ button { font-family: inherit; }
   transition: background-color 260ms var(--ease);
 }
 
-.log-cell--complete { background: var(--camp-green); }
+.log-cell--complete { background: var(--camp-accent); }
 .log-cell--missed { background: var(--camp-cell-missed); }
-.log-cell--upcoming { border-color: rgba(233, 225, 207, 0.10); }
+.log-cell--upcoming { border-color: rgba(var(--camp-bone-rgb), 0.10); }
 .log-cell--today { box-shadow: 0 0 0 1.5px var(--camp-bone); }
 
 /* ===================== LEGEND ===================== */
@@ -323,9 +358,9 @@ button { font-family: inherit; }
   background: transparent;
 }
 
-.legend-swatch--complete { background: var(--camp-green); }
+.legend-swatch--complete { background: var(--camp-accent); }
 .legend-swatch--missed { background: var(--camp-cell-missed); }
-.legend-swatch--upcoming { border: 1px solid rgba(233, 225, 207, 0.10); }
+.legend-swatch--upcoming { border: 1px solid rgba(var(--camp-bone-rgb), 0.10); }
 .legend-swatch--today { box-shadow: 0 0 0 1.5px var(--camp-bone); }
 
 .legend-text {
@@ -340,8 +375,40 @@ button { font-family: inherit; }
 .camp-footer {
   margin-top: 38px;
   padding-top: 24px;
-  border-top: 1px solid rgba(233, 225, 207, 0.12);
-  text-align: center;
+  border-top: 1px solid rgba(var(--camp-bone-rgb), 0.12);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.camp-theme-switch {
+  display: flex;
+  gap: 4px;
+  border: 1px solid rgba(var(--camp-bone-rgb), 0.14);
+  border-radius: 6px;
+  padding: 3px;
+}
+
+.camp-theme-btn {
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--camp-tan);
+  cursor: pointer;
+  transition: color 200ms var(--ease), background-color 200ms var(--ease);
+}
+
+.camp-theme-btn:hover { color: var(--camp-bone); }
+
+.camp-theme-btn.is-active {
+  background: rgba(var(--camp-bone-rgb), 0.10);
+  color: var(--camp-bone);
 }
 
 .camp-reset-btn {
@@ -373,7 +440,7 @@ button { font-family: inherit; }
   max-width: calc(100% - 48px);
   padding: 14px 18px;
   background: var(--camp-card-bg);
-  border: 1px solid rgba(233, 225, 207, 0.14);
+  border: 1px solid rgba(var(--camp-bone-rgb), 0.14);
   border-radius: 6px;
   cursor: pointer;
   opacity: 0;
@@ -391,7 +458,7 @@ button { font-family: inherit; }
   flex: 0 0 auto;
   width: 2px;
   align-self: stretch;
-  background: var(--camp-green);
+  background: var(--camp-accent);
 }
 
 .camp-toast__copy {
@@ -416,14 +483,14 @@ button { font-family: inherit; }
   color: var(--camp-tan);
 }
 
-/* ===================== YESTERDAY HONESTY PROMPT ===================== */
+/* ===================== HONESTY PROMPT ===================== */
 .camp-overlay {
   position: fixed;
   inset: 0;
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  background: rgba(16, 14, 11, 0.78);
+  background: rgba(var(--camp-bg-rgb), 0.78);
   padding: 24px;
   z-index: 10;
 }
@@ -445,7 +512,7 @@ button { font-family: inherit; }
   width: 100%;
   max-width: 380px;
   background: var(--camp-card-bg);
-  border: 1px solid rgba(233, 225, 207, 0.14);
+  border: 1px solid rgba(var(--camp-bone-rgb), 0.14);
   border-radius: 6px;
   padding: 28px 24px;
 }
@@ -476,7 +543,7 @@ button { font-family: inherit; }
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.1em;
-  color: var(--camp-green);
+  color: var(--camp-accent);
 }
 
 .camp-dialog__question {
@@ -497,9 +564,9 @@ button { font-family: inherit; }
 .camp-dialog__btn {
   flex: 1;
   padding: 13px 16px;
-  background: var(--camp-green);
+  background: var(--camp-accent);
   color: var(--camp-ink);
-  border: 1px solid var(--camp-green);
+  border: 1px solid var(--camp-accent);
   border-radius: 6px;
   font-family: var(--font-mono);
   font-size: 12px;
@@ -517,5 +584,5 @@ button { font-family: inherit; }
 .camp-dialog__btn--ghost {
   background: transparent;
   color: var(--camp-bone);
-  border-color: rgba(233, 225, 207, 0.22);
+  border-color: rgba(var(--camp-bone-rgb), 0.22);
 }
