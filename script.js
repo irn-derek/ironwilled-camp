@@ -1,7 +1,4 @@
 (() => {
-  // Single source of truth for program dates — every other date in this file
-  // is derived from CAMP_START, nothing else is hardcoded.
-  const CAMP_START = new Date(2026, 6, 6); // July 6, 2026 — live now
   const PROGRAM_LENGTH = 30;
 
   const HABITS = [
@@ -16,6 +13,7 @@
   const DAYS_KEY = 'camp:days:v1';
   const ASKED_KEY = 'camp:asked:v1';
   const POINTER_KEY = 'camp:pointer:v1';
+  const START_KEY = 'camp:start:v1';
 
   // Every date helper below uses local getters/constructors (getFullYear,
   // getMonth, getDate, setDate, the multi-arg Date constructor) — never
@@ -63,14 +61,29 @@
     return startOfDay(new Date());
   }
 
-  const campStartDay = startOfDay(CAMP_START);
+  // Day 1 is personal, not a shared calendar date — it's whatever day this
+  // visitor first opens the tracker on, persisted so it never moves again.
+  // A fixed global start date would mean everyone lands further into the
+  // program the longer the link has been live, instead of starting at Day 1.
+  function loadProgramStart() {
+    const stored = localStorage.getItem(START_KEY);
+    if (stored) {
+      const parsed = new Date(`${stored}T00:00:00`);
+      if (!isNaN(parsed)) return startOfDay(parsed);
+    }
+    const start = resolveToday();
+    localStorage.setItem(START_KEY, dateKey(start));
+    return start;
+  }
+
+  const programStart = loadProgramStart();
 
   function realDayOffset() {
-    return Math.round((resolveToday() - campStartDay) / 86400000); // 0 === program day 1
+    return Math.round((resolveToday() - programStart) / 86400000); // 0 === program day 1
   }
 
   function dateKeyForIndex(index) {
-    return dateKey(addDays(campStartDay, index));
+    return dateKey(addDays(programStart, index));
   }
 
   let days = loadJSON(DAYS_KEY);
@@ -82,8 +95,6 @@
   }
 
   // Recomputed every sync() call, never cached across a day boundary.
-  let isPreLaunch = false;
-  let daysUntilStart = 0;
   let todayIndex = 0;
   let todayKey = '';
   let honestyQueue = [];
@@ -112,6 +123,7 @@
     honestyNo: document.getElementById('honestyNo'),
     advanceBtn: document.getElementById('advanceDayBtn'),
     advanceDayNum: document.getElementById('advanceDayNum'),
+    resetBtn: document.getElementById('resetBtn'),
   };
 
   function loadTodayChecked() {
@@ -176,8 +188,6 @@
     const real = realDayOffset();
     const raw = pointer.manualOffset != null ? Math.max(real, pointer.manualOffset) : real;
 
-    isPreLaunch = raw < 0;
-    daysUntilStart = isPreLaunch ? -raw : 0;
     todayIndex = Math.max(0, Math.min(raw, PROGRAM_LENGTH - 1));
     todayKey = dateKeyForIndex(todayIndex);
 
@@ -185,7 +195,7 @@
       // First-ever visit: nothing to audit, just record where we start.
       pointer.lastSeenIndex = todayIndex;
       persistPointer();
-    } else if (!isPreLaunch && todayIndex > pointer.lastSeenIndex) {
+    } else if (todayIndex > pointer.lastSeenIndex) {
       queueGapDays(pointer.lastSeenIndex, todayIndex);
       pointer.lastSeenIndex = todayIndex;
       persistPointer();
@@ -261,6 +271,18 @@
     render();
   }
 
+  // Wipes all local progress and re-anchors Day 1 to today — for a failed
+  // attempt or a deliberate restart, not something that should ever require
+  // digging into devtools.
+  function resetProgram() {
+    if (!confirm('Reset all progress and start over at Day 1?')) return;
+    localStorage.removeItem(DAYS_KEY);
+    localStorage.removeItem(ASKED_KEY);
+    localStorage.removeItem(POINTER_KEY);
+    localStorage.removeItem(START_KEY);
+    location.reload();
+  }
+
   function buildChecklist() {
     els.checklist.innerHTML = '';
     HABITS.forEach((habit, i) => {
@@ -286,37 +308,28 @@
 
   function render() {
     const doneToday = state.checked.filter(Boolean).length;
+    const streak = doneToday === 6 ? historicalStreak() + 1 : historicalStreak();
 
-    if (isPreLaunch) {
-      const label = daysUntilStart === 1 ? 'day' : 'days';
-      els.dayLine.textContent = `Camp starts in ${daysUntilStart} ${label}`;
-      els.streakNumber.textContent = '0';
-      els.doneCount.textContent = '0 / 6';
-    } else {
-      const streak = doneToday === 6 ? historicalStreak() + 1 : historicalStreak();
-      els.dayLine.textContent = `Day ${todayIndex + 1} of ${PROGRAM_LENGTH}`;
-      els.streakNumber.textContent = String(streak);
-      els.doneCount.textContent = `${doneToday} / 6`;
-    }
-
+    els.dayLine.textContent = `Day ${todayIndex + 1} of ${PROGRAM_LENGTH}`;
+    els.streakNumber.textContent = String(streak);
+    els.doneCount.textContent = `${doneToday} / 6`;
     els.logTitle.textContent = `${PROGRAM_LENGTH}-Day Log`;
-    els.logCount.textContent = isPreLaunch ? `— / ${PROGRAM_LENGTH}` : `${todayIndex + 1} / ${PROGRAM_LENGTH}`;
+    els.logCount.textContent = `${todayIndex + 1} / ${PROGRAM_LENGTH}`;
 
     [...els.checklist.children].forEach((item, i) => {
       item.classList.toggle('is-checked', !!state.checked[i]);
-      item.disabled = isPreLaunch;
     });
 
     els.logGrid.innerHTML = '';
     for (let d = 0; d < PROGRAM_LENGTH; d++) {
-      const status = isPreLaunch ? 'upcoming' : statusForDay(d, doneToday);
+      const status = statusForDay(d, doneToday);
       const cell = document.createElement('div');
       cell.className = `log-cell log-cell--${status === 'pending' ? 'upcoming' : status}`;
-      if (!isPreLaunch && d === todayIndex) cell.classList.add('log-cell--today');
+      if (d === todayIndex) cell.classList.add('log-cell--today');
       els.logGrid.appendChild(cell);
     }
 
-    const canAdvance = !isPreLaunch && doneToday === 6 && todayIndex < PROGRAM_LENGTH - 1;
+    const canAdvance = doneToday === 6 && todayIndex < PROGRAM_LENGTH - 1;
     els.advanceBtn.hidden = !canAdvance;
     if (canAdvance) els.advanceDayNum.textContent = String(todayIndex + 2);
   }
@@ -334,6 +347,7 @@
 
   els.toast.addEventListener('click', hideToast);
   els.advanceBtn.addEventListener('click', advanceDay);
+  els.resetBtn.addEventListener('click', resetProgram);
 
   // Catches a calendar rollover while the tab stays open — a light polling
   // safety net plus an immediate recheck when the tab regains focus/visibility,
