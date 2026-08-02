@@ -122,7 +122,6 @@
     honestyYes: document.getElementById('honestyYes'),
     honestyNo: document.getElementById('honestyNo'),
     advanceBtn: document.getElementById('advanceDayBtn'),
-    advanceDayNum: document.getElementById('advanceDayNum'),
     advanceAnywayBtn: document.getElementById('advanceAnywayBtn'),
     resetBtn: document.getElementById('resetBtn'),
     themeButtons: document.querySelectorAll('.camp-theme-btn'),
@@ -381,7 +380,6 @@
     const dayRemains = todayIndex < PROGRAM_LENGTH - 1;
     const canAdvance = doneToday === 6 && dayRemains;
     els.advanceBtn.hidden = !canAdvance;
-    if (canAdvance) els.advanceDayNum.textContent = String(todayIndex + 2);
     els.advanceAnywayBtn.hidden = doneToday === 6 || !dayRemains;
   }
 
