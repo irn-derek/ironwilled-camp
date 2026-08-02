@@ -123,6 +123,7 @@
     honestyNo: document.getElementById('honestyNo'),
     advanceBtn: document.getElementById('advanceDayBtn'),
     advanceDayNum: document.getElementById('advanceDayNum'),
+    advanceAnywayBtn: document.getElementById('advanceAnywayBtn'),
     resetBtn: document.getElementById('resetBtn'),
     themeButtons: document.querySelectorAll('.camp-theme-btn'),
   };
@@ -287,8 +288,7 @@
     }
   }
 
-  function advanceDay() {
-    if (state.checked.filter(Boolean).length !== 6) return;
+  function doAdvance() {
     if (todayIndex >= PROGRAM_LENGTH - 1) return;
     persistToday();
     const next = todayIndex + 1;
@@ -297,6 +297,27 @@
     sync();
     processHonestyQueue();
     render();
+  }
+
+  function advanceDay() {
+    if (state.checked.filter(Boolean).length !== 6) return;
+    doAdvance();
+  }
+
+  // A day that ends incomplete still counts — it just goes in the log as
+  // missed, same as a day skipped by the real calendar. Lets someone get
+  // back on track tomorrow instead of being stuck unable to move on, or
+  // feeling like a full reset is the only way forward.
+  function advanceAnyway() {
+    const doneToday = state.checked.filter(Boolean).length;
+    if (doneToday === 6) return;
+    if (todayIndex >= PROGRAM_LENGTH - 1) return;
+    if (!confirm(`Mark Day ${todayIndex + 1} incomplete and move to Day ${todayIndex + 2}?`)) return;
+    // Already explicitly acknowledged above — don't also queue an honesty
+    // prompt asking the same thing again once the day is behind us.
+    asked[todayKey] = true;
+    saveJSON(ASKED_KEY, asked);
+    doAdvance();
   }
 
   // Wipes all local progress and re-anchors Day 1 to today — for a failed
@@ -357,9 +378,11 @@
       els.logGrid.appendChild(cell);
     }
 
-    const canAdvance = doneToday === 6 && todayIndex < PROGRAM_LENGTH - 1;
+    const dayRemains = todayIndex < PROGRAM_LENGTH - 1;
+    const canAdvance = doneToday === 6 && dayRemains;
     els.advanceBtn.hidden = !canAdvance;
     if (canAdvance) els.advanceDayNum.textContent = String(todayIndex + 2);
+    els.advanceAnywayBtn.hidden = doneToday === 6 || !dayRemains;
   }
 
   function recheck() {
@@ -376,6 +399,7 @@
 
   els.toast.addEventListener('click', hideToast);
   els.advanceBtn.addEventListener('click', advanceDay);
+  els.advanceAnywayBtn.addEventListener('click', advanceAnyway);
   els.resetBtn.addEventListener('click', resetProgram);
   els.themeButtons.forEach((btn) => {
     btn.addEventListener('click', () => setTheme(btn.dataset.themeChoice));

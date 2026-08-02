@@ -316,6 +316,31 @@ button { font-family: inherit; }
 .camp-advance-btn:hover { background: rgba(var(--camp-accent-rgb), 0.12); }
 .camp-advance-btn:active { opacity: 0.7; }
 
+/* Quieter than the primary advance button on purpose — available, not encouraged. */
+.camp-advance-anyway-btn {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 12px 16px;
+  background: transparent;
+  color: var(--camp-tan);
+  border: 1px solid rgba(var(--camp-bone-rgb), 0.14);
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-align: center;
+  cursor: pointer;
+  transition: color 200ms var(--ease), border-color 200ms var(--ease), opacity 200ms var(--ease);
+}
+
+.camp-advance-anyway-btn:hover {
+  color: var(--camp-bone);
+  border-color: rgba(var(--camp-bone-rgb), 0.28);
+}
+.camp-advance-anyway-btn:active { opacity: 0.6; }
+
 /* ===================== 30-DAY LOG ===================== */
 .log-grid {
   display: grid;
