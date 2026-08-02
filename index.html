@@ -121,6 +121,31 @@
   </div>
 </div>
 
+<!-- ===================== DAY DETAIL (view/edit a past day) ===================== -->
+<div class="camp-overlay" id="dayDetailOverlay" hidden>
+  <div class="camp-dialog" id="dayDetailDialog" role="dialog" aria-modal="true" aria-labelledby="dayDetailEyebrow">
+    <div class="camp-dialog__head">
+      <span class="camp-dialog__eyebrow" id="dayDetailEyebrow">Day 1</span>
+      <span class="camp-dialog__progress" id="dayDetailStatus"></span>
+    </div>
+
+    <div class="checklist camp-day-detail-list" id="dayDetailChecklist"></div>
+
+    <div class="camp-day-detail-integrity" id="dayDetailIntegrity" hidden>
+      <p class="camp-day-detail-integrity__text">Adjust this only to correct a mistake — not to change what actually happened. That's the whole point of keeping the log honest.</p>
+      <div class="camp-dialog__actions">
+        <button type="button" class="camp-dialog__btn" id="dayDetailIntegrityConfirm">Continue</button>
+        <button type="button" class="camp-dialog__btn camp-dialog__btn--ghost" id="dayDetailIntegrityCancel">Cancel</button>
+      </div>
+    </div>
+
+    <div class="camp-dialog__actions" id="dayDetailActions">
+      <button type="button" class="camp-dialog__btn camp-dialog__btn--ghost" id="dayDetailEditBtn">Edit This Day</button>
+      <button type="button" class="camp-dialog__btn camp-dialog__btn--ghost" id="dayDetailCloseBtn">Close</button>
+    </div>
+  </div>
+</div>
+
 <script src="script.js"></script>
 </body>
 </html>

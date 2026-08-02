@@ -611,3 +611,44 @@ button { font-family: inherit; }
   color: var(--camp-bone);
   border-color: rgba(var(--camp-bone-rgb), 0.22);
 }
+
+/* ===================== DAY DETAIL ===================== */
+.camp-day-detail-list {
+  margin: 4px 0 20px;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+/* Read-only rows while locked — same look as the live checklist, just inert. */
+.checklist-item--locked {
+  cursor: default;
+}
+
+.camp-day-detail-integrity {
+  margin-bottom: 20px;
+  padding: 16px;
+  background: rgba(var(--camp-bone-rgb), 0.05);
+  border: 1px solid rgba(var(--camp-bone-rgb), 0.14);
+  border-radius: 6px;
+}
+
+.camp-day-detail-integrity__text {
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--camp-bone);
+  margin: 0 0 16px;
+}
+
+.camp-day-detail-integrity .camp-dialog__actions {
+  margin: 0;
+}
+
+.log-cell--clickable {
+  cursor: pointer;
+  transition: opacity 200ms var(--ease), background-color 260ms var(--ease);
+}
+
+.log-cell--clickable:hover {
+  opacity: 0.7;
+}

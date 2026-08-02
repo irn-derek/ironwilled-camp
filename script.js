@@ -125,6 +125,16 @@
     advanceAnywayBtn: document.getElementById('advanceAnywayBtn'),
     resetBtn: document.getElementById('resetBtn'),
     themeButtons: document.querySelectorAll('.camp-theme-btn'),
+    dayDetailOverlay: document.getElementById('dayDetailOverlay'),
+    dayDetailEyebrow: document.getElementById('dayDetailEyebrow'),
+    dayDetailStatus: document.getElementById('dayDetailStatus'),
+    dayDetailChecklist: document.getElementById('dayDetailChecklist'),
+    dayDetailIntegrity: document.getElementById('dayDetailIntegrity'),
+    dayDetailIntegrityConfirm: document.getElementById('dayDetailIntegrityConfirm'),
+    dayDetailIntegrityCancel: document.getElementById('dayDetailIntegrityCancel'),
+    dayDetailActions: document.getElementById('dayDetailActions'),
+    dayDetailEditBtn: document.getElementById('dayDetailEditBtn'),
+    dayDetailCloseBtn: document.getElementById('dayDetailCloseBtn'),
   };
 
   const THEME_KEY = 'camp:theme:v1';
@@ -331,24 +341,101 @@
     location.reload();
   }
 
+  // ===================== DAY DETAIL (view/edit a past day) =====================
+  // Locked (read-only) by default every time it opens, even for a day that
+  // was unlocked in a previous visit — the integrity gate should mean
+  // something each time, not just once ever.
+  let dayDetailIndex = null;
+  let dayDetailUnlocked = false;
+
+  function dayDetailChecked() {
+    const rec = days[dateKeyForIndex(dayDetailIndex)];
+    return rec ? rec.checked.slice() : [false, false, false, false, false, false];
+  }
+
+  function renderDayDetail() {
+    const checked = dayDetailChecked();
+    const done = checked.filter(Boolean).length;
+
+    els.dayDetailEyebrow.textContent = `Day ${dayDetailIndex + 1}`;
+    els.dayDetailStatus.textContent = done === 6 ? 'Complete' : `${done} / 6`;
+
+    els.dayDetailChecklist.innerHTML = '';
+    HABITS.forEach((habit, i) => {
+      const row = document.createElement(dayDetailUnlocked ? 'button' : 'div');
+      if (dayDetailUnlocked) row.type = 'button';
+      row.className = 'checklist-item' + (dayDetailUnlocked ? '' : ' checklist-item--locked');
+      row.classList.toggle('is-checked', !!checked[i]);
+      row.innerHTML = checklistItemInnerHTML(habit);
+      if (dayDetailUnlocked) {
+        row.addEventListener('click', () => toggleDayDetailItem(i));
+      }
+      els.dayDetailChecklist.appendChild(row);
+    });
+
+    els.dayDetailIntegrity.hidden = true;
+    els.dayDetailActions.hidden = false;
+    els.dayDetailEditBtn.hidden = dayDetailUnlocked;
+  }
+
+  function toggleDayDetailItem(i) {
+    const checked = dayDetailChecked();
+    checked[i] = !checked[i];
+    days[dateKeyForIndex(dayDetailIndex)] = { checked };
+    saveJSON(DAYS_KEY, days);
+    renderDayDetail();
+    render(); // streak and the log grid both depend on this day's record
+  }
+
+  function openDayDetail(index) {
+    dayDetailIndex = index;
+    dayDetailUnlocked = false;
+    renderDayDetail();
+    els.dayDetailOverlay.hidden = false;
+  }
+
+  function closeDayDetail() {
+    els.dayDetailOverlay.hidden = true;
+    dayDetailIndex = null;
+  }
+
+  function requestDayDetailEdit() {
+    els.dayDetailActions.hidden = true;
+    els.dayDetailIntegrity.hidden = false;
+  }
+
+  function confirmDayDetailEdit() {
+    dayDetailUnlocked = true;
+    renderDayDetail();
+  }
+
+  function cancelDayDetailEdit() {
+    els.dayDetailIntegrity.hidden = true;
+    els.dayDetailActions.hidden = false;
+  }
+
+  function checklistItemInnerHTML(habit) {
+    return `
+      <span class="checklist-item__accent"></span>
+      <span class="checklist-item__box">
+        <span class="checklist-item__fill">
+          <span class="checklist-item__check"></span>
+        </span>
+      </span>
+      <span class="checklist-item__copy">
+        <span class="checklist-item__title">${habit.title}</span>
+        <span class="checklist-item__subtitle">${habit.subtitle}</span>
+      </span>
+    `;
+  }
+
   function buildChecklist() {
     els.checklist.innerHTML = '';
     HABITS.forEach((habit, i) => {
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'checklist-item';
-      button.innerHTML = `
-        <span class="checklist-item__accent"></span>
-        <span class="checklist-item__box">
-          <span class="checklist-item__fill">
-            <span class="checklist-item__check"></span>
-          </span>
-        </span>
-        <span class="checklist-item__copy">
-          <span class="checklist-item__title">${habit.title}</span>
-          <span class="checklist-item__subtitle">${habit.subtitle}</span>
-        </span>
-      `;
+      button.innerHTML = checklistItemInnerHTML(habit);
       button.addEventListener('click', () => toggle(i));
       els.checklist.appendChild(button);
     });
@@ -374,6 +461,10 @@
       const cell = document.createElement('div');
       cell.className = `log-cell log-cell--${status === 'pending' ? 'upcoming' : status}`;
       if (d === todayIndex) cell.classList.add('log-cell--today');
+      if (d < todayIndex) {
+        cell.classList.add('log-cell--clickable');
+        cell.addEventListener('click', () => openDayDetail(d));
+      }
       els.logGrid.appendChild(cell);
     }
 
@@ -401,6 +492,13 @@
   els.resetBtn.addEventListener('click', resetProgram);
   els.themeButtons.forEach((btn) => {
     btn.addEventListener('click', () => setTheme(btn.dataset.themeChoice));
+  });
+  els.dayDetailEditBtn.addEventListener('click', requestDayDetailEdit);
+  els.dayDetailIntegrityConfirm.addEventListener('click', confirmDayDetailEdit);
+  els.dayDetailIntegrityCancel.addEventListener('click', cancelDayDetailEdit);
+  els.dayDetailCloseBtn.addEventListener('click', closeDayDetail);
+  els.dayDetailOverlay.addEventListener('click', (e) => {
+    if (e.target === els.dayDetailOverlay) closeDayDetail();
   });
 
   // Catches a calendar rollover while the tab stays open — a light polling
