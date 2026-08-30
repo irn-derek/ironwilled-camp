@@ -652,3 +652,21 @@ button { font-family: inherit; }
 .log-cell--clickable:hover {
   opacity: 0.7;
 }
+
+/* ===================== 30-DAY MILESTONE ===================== */
+.camp-milestone-body {
+  margin: 0 0 22px;
+}
+
+.camp-milestone-body p {
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--camp-bone);
+  margin: 0 0 14px;
+}
+
+.camp-milestone-body p:last-child {
+  margin-bottom: 0;
+  color: var(--camp-tan);
+}

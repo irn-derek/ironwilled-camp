@@ -14,6 +14,7 @@
   const ASKED_KEY = 'camp:asked:v1';
   const POINTER_KEY = 'camp:pointer:v1';
   const START_KEY = 'camp:start:v1';
+  const MILESTONE_KEY = 'camp:milestone30:v1';
 
   // Every date helper below uses local getters/constructors (getFullYear,
   // getMonth, getDate, setDate, the multi-arg Date constructor) — never
@@ -135,6 +136,9 @@
     dayDetailActions: document.getElementById('dayDetailActions'),
     dayDetailEditBtn: document.getElementById('dayDetailEditBtn'),
     dayDetailCloseBtn: document.getElementById('dayDetailCloseBtn'),
+    milestoneOverlay: document.getElementById('milestoneOverlay'),
+    milestoneKeepGoing: document.getElementById('milestoneKeepGoing'),
+    milestoneStartOver: document.getElementById('milestoneStartOver'),
   };
 
   const THEME_KEY = 'camp:theme:v1';
@@ -260,6 +264,7 @@
     if (honestyQueue.length === 0) {
       els.honestyOverlay.hidden = true;
       honestyBatchTotal = 0;
+      maybeShowMilestone();
       return;
     }
     const item = honestyQueue[0];
@@ -296,7 +301,13 @@
     persistToday();
     render();
     if (prevDone < 6 && newDone === 6) {
-      showToast(historicalStreak() + 1);
+      // Day 30 gets the milestone instead of the everyday toast — showing
+      // both at once would step on the moment.
+      if (todayIndex === PROGRAM_LENGTH - 1) {
+        maybeShowMilestone();
+      } else {
+        showToast(historicalStreak() + 1);
+      }
     }
   }
 
@@ -333,13 +344,36 @@
   // Wipes all local progress and re-anchors Day 1 to today — for a failed
   // attempt or a deliberate restart, not something that should ever require
   // digging into devtools.
-  function resetProgram() {
-    if (!confirm('Reset all progress and start over at Day 1?')) return;
+  function performReset() {
     localStorage.removeItem(DAYS_KEY);
     localStorage.removeItem(ASKED_KEY);
     localStorage.removeItem(POINTER_KEY);
     localStorage.removeItem(START_KEY);
+    localStorage.removeItem(MILESTONE_KEY);
     location.reload();
+  }
+
+  function resetProgram() {
+    if (!confirm('Reset all progress and start over at Day 1?')) return;
+    performReset();
+  }
+
+  // ===================== 30-DAY MILESTONE =====================
+  // Fires the first time Day 30 is seen complete — whether that's the live
+  // moment of checking the 6th box, or just opening the app later and
+  // finding it already done (including for anyone who'd already finished
+  // before this existed). Shown once; "Keep Going" just records that and
+  // lets the now-uncapped program continue, "Start Over" resets outright.
+  function maybeShowMilestone() {
+    if (honestyQueue.length > 0) return; // let the honesty backlog clear first
+    if (localStorage.getItem(MILESTONE_KEY) === 'true') return;
+    if (!isDayComplete(PROGRAM_LENGTH - 1)) return;
+    els.milestoneOverlay.hidden = false;
+  }
+
+  function dismissMilestone() {
+    localStorage.setItem(MILESTONE_KEY, 'true');
+    els.milestoneOverlay.hidden = true;
   }
 
   // ===================== DAY DETAIL (view/edit a past day) =====================
@@ -510,6 +544,8 @@
   els.dayDetailOverlay.addEventListener('click', (e) => {
     if (e.target === els.dayDetailOverlay) closeDayDetail();
   });
+  els.milestoneKeepGoing.addEventListener('click', dismissMilestone);
+  els.milestoneStartOver.addEventListener('click', performReset);
 
   // Catches a calendar rollover while the tab stays open — a light polling
   // safety net plus an immediate recheck when the tab regains focus/visibility,
