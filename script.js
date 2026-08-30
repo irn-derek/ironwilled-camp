@@ -226,7 +226,10 @@
     const real = realDayOffset();
     const raw = pointer.manualOffset != null ? Math.max(real, pointer.manualOffset) : real;
 
-    todayIndex = Math.max(0, Math.min(raw, PROGRAM_LENGTH - 1));
+    // No upper clamp — the 30-day commitment doesn't force a stop. Streak and
+    // the checklist keep running past Day 30; only the log's fixed window
+    // (see render()) treats 30 as a boundary, and it slides forward instead.
+    todayIndex = Math.max(0, raw);
     todayKey = dateKeyForIndex(todayIndex);
 
     if (pointer.lastSeenIndex === null) {
@@ -298,7 +301,6 @@
   }
 
   function doAdvance() {
-    if (todayIndex >= PROGRAM_LENGTH - 1) return;
     persistToday();
     const next = todayIndex + 1;
     pointer.manualOffset = pointer.manualOffset != null ? Math.max(pointer.manualOffset, next) : next;
@@ -320,7 +322,6 @@
   function advanceAnyway() {
     const doneToday = state.checked.filter(Boolean).length;
     if (doneToday === 6) return;
-    if (todayIndex >= PROGRAM_LENGTH - 1) return;
     if (!confirm(`Mark Day ${todayIndex + 1} incomplete and move to Day ${todayIndex + 2}?`)) return;
     // Already explicitly acknowledged above — don't also queue an honesty
     // prompt asking the same thing again once the day is behind us.
@@ -444,19 +445,30 @@
   function render() {
     const doneToday = state.checked.filter(Boolean).length;
     const streak = doneToday === 6 ? historicalStreak() + 1 : historicalStreak();
+    const pastProgram = todayIndex >= PROGRAM_LENGTH;
 
-    els.dayLine.textContent = `Day ${todayIndex + 1} of ${PROGRAM_LENGTH}`;
+    els.dayLine.textContent = pastProgram
+      ? `Day ${todayIndex + 1} — Camp Complete`
+      : `Day ${todayIndex + 1} of ${PROGRAM_LENGTH}`;
     els.streakNumber.textContent = String(streak);
     els.doneCount.textContent = `${doneToday} / 6`;
-    els.logTitle.textContent = `${PROGRAM_LENGTH}-Day Log`;
-    els.logCount.textContent = `${todayIndex + 1} / ${PROGRAM_LENGTH}`;
+
+    // Through Day 30 the log is the fixed program grid. From Day 31 on, it
+    // becomes a rolling window of the most recent 30 days — always 30 cells,
+    // sliding forward with today — so finishing the program never means the
+    // log (or the streak driving it) has to stop.
+    const windowStart = Math.max(0, todayIndex - PROGRAM_LENGTH + 1);
+    els.logTitle.textContent = pastProgram ? 'Last 30 Days' : `${PROGRAM_LENGTH}-Day Log`;
+    els.logCount.textContent = pastProgram
+      ? `${windowStart + 1}–${todayIndex + 1}`
+      : `${todayIndex + 1} / ${PROGRAM_LENGTH}`;
 
     [...els.checklist.children].forEach((item, i) => {
       item.classList.toggle('is-checked', !!state.checked[i]);
     });
 
     els.logGrid.innerHTML = '';
-    for (let d = 0; d < PROGRAM_LENGTH; d++) {
+    for (let d = windowStart; d <= windowStart + PROGRAM_LENGTH - 1; d++) {
       const status = statusForDay(d, doneToday);
       const cell = document.createElement('div');
       cell.className = `log-cell log-cell--${status === 'pending' ? 'upcoming' : status}`;
@@ -468,10 +480,8 @@
       els.logGrid.appendChild(cell);
     }
 
-    const dayRemains = todayIndex < PROGRAM_LENGTH - 1;
-    const canAdvance = doneToday === 6 && dayRemains;
-    els.advanceBtn.hidden = !canAdvance;
-    els.advanceAnywayBtn.hidden = doneToday === 6 || !dayRemains;
+    els.advanceBtn.hidden = doneToday !== 6;
+    els.advanceAnywayBtn.hidden = doneToday === 6;
   }
 
   function recheck() {
