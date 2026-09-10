@@ -15,6 +15,27 @@
   const POINTER_KEY = 'camp:pointer:v1';
   const START_KEY = 'camp:start:v1';
   const MILESTONE_KEY = 'camp:milestone30:v1';
+  const EXTRA_MILESTONES_SEEN_KEY = 'camp:milestonesSeen:v1';
+
+  // Day-count milestones past the original 30 — same completion-gated logic
+  // as Day 30 (the specific day has to be checked off, not just reached),
+  // but lighter-weight: a toast, not a blocking dialog, so the program
+  // doesn't keep interrupting itself every time someone hits a big number.
+  const EXTRA_MILESTONES = {
+    35: { title: '35 days.', note: 'Five past the finish. Still going.' },
+    50: { title: '50 days.', note: 'Halfway to 100.' },
+    55: { title: '55 days.', note: 'This is just what you do now.' },
+    75: { title: '75 days.', note: 'Most people stop before this.' },
+    90: { title: '90 days.', note: 'Ninety, in a row.' },
+    100: { title: '100 days.', note: 'Triple digits. Earned.' },
+  };
+
+  const TROPHIES = [
+    { day: PROGRAM_LENGTH, label: 'Camp', title: 'Full Camp — 30 days complete' },
+    { day: 50, label: '50', title: '50 Days' },
+    { day: 75, label: '75', title: '75 Days' },
+    { day: 100, label: '100', title: '100 Days' },
+  ];
 
   // Every date helper below uses local getters/constructors (getFullYear,
   // getMonth, getDate, setDate, the multi-arg Date constructor) — never
@@ -115,6 +136,7 @@
     logGrid: document.getElementById('logGrid'),
     legend: document.getElementById('legend'),
     toast: document.getElementById('campToast'),
+    toastText: document.getElementById('campToastText'),
     toastStreak: document.getElementById('campToastStreak'),
     honestyOverlay: document.getElementById('honestyOverlay'),
     honestyDialog: document.getElementById('honestyDialog'),
@@ -139,6 +161,7 @@
     milestoneOverlay: document.getElementById('milestoneOverlay'),
     milestoneKeepGoing: document.getElementById('milestoneKeepGoing'),
     milestoneStartOver: document.getElementById('milestoneStartOver'),
+    trophyCase: document.getElementById('trophyCase'),
   };
 
   const THEME_KEY = 'camp:theme:v1';
@@ -251,10 +274,19 @@
 
   let toastTimer = null;
   function showToast(streak) {
+    els.toastText.textContent = 'Day forged.';
     els.toastStreak.textContent = `Streak ${streak}.`;
     els.toast.classList.add('is-visible');
     clearTimeout(toastTimer);
     toastTimer = setTimeout(hideToast, 3200);
+  }
+  function showMilestoneToast(dayNumber) {
+    const m = EXTRA_MILESTONES[dayNumber];
+    els.toastText.textContent = m.title;
+    els.toastStreak.textContent = m.note;
+    els.toast.classList.add('is-visible');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(hideToast, 4200);
   }
   function hideToast() {
     els.toast.classList.remove('is-visible');
@@ -265,6 +297,7 @@
       els.honestyOverlay.hidden = true;
       honestyBatchTotal = 0;
       maybeShowMilestone();
+      checkExtraMilestones();
       return;
     }
     const item = honestyQueue[0];
@@ -301,10 +334,15 @@
     persistToday();
     render();
     if (prevDone < 6 && newDone === 6) {
-      // Day 30 gets the milestone instead of the everyday toast — showing
-      // both at once would step on the moment.
-      if (todayIndex === PROGRAM_LENGTH - 1) {
+      // Day 30 gets the milestone dialog; the later day-count milestones get
+      // a bigger toast; everything else gets the everyday one. Never both at
+      // once — showing two would step on the moment either way.
+      const dayNumber = todayIndex + 1;
+      if (dayNumber === PROGRAM_LENGTH) {
         maybeShowMilestone();
+      } else if (EXTRA_MILESTONES[dayNumber]) {
+        showMilestoneToast(dayNumber);
+        markMilestoneSeen(dayNumber);
       } else {
         showToast(historicalStreak() + 1);
       }
@@ -350,6 +388,7 @@
     localStorage.removeItem(POINTER_KEY);
     localStorage.removeItem(START_KEY);
     localStorage.removeItem(MILESTONE_KEY);
+    localStorage.removeItem(EXTRA_MILESTONES_SEEN_KEY);
     location.reload();
   }
 
@@ -374,6 +413,31 @@
   function dismissMilestone() {
     localStorage.setItem(MILESTONE_KEY, 'true');
     els.milestoneOverlay.hidden = true;
+  }
+
+  // ===================== LATER MILESTONES (35, 50, 55, 75, 90, 100) =====================
+  function markMilestoneSeen(dayNumber) {
+    const seen = loadJSON(EXTRA_MILESTONES_SEEN_KEY);
+    seen[dayNumber] = true;
+    saveJSON(EXTRA_MILESTONES_SEEN_KEY, seen);
+  }
+
+  // Catches the same "already done before you opened the app" case as Day
+  // 30 — checked in ascending order so a long absence surfaces the earliest
+  // unseen milestone first, one toast per check rather than piling them up.
+  function checkExtraMilestones() {
+    if (honestyQueue.length > 0) return;
+    if (!els.milestoneOverlay.hidden) return;
+    const seen = loadJSON(EXTRA_MILESTONES_SEEN_KEY);
+    const days30Plus = Object.keys(EXTRA_MILESTONES).map(Number).sort((a, b) => a - b);
+    for (const dayNumber of days30Plus) {
+      if (seen[dayNumber]) continue;
+      if (isDayComplete(dayNumber - 1)) {
+        showMilestoneToast(dayNumber);
+        markMilestoneSeen(dayNumber);
+        return;
+      }
+    }
   }
 
   // ===================== DAY DETAIL (view/edit a past day) =====================
@@ -516,6 +580,26 @@
 
     els.advanceBtn.hidden = doneToday !== 6;
     els.advanceAnywayBtn.hidden = doneToday === 6;
+
+    renderTrophyCase();
+  }
+
+  // Purely derived from the day records, same as everything else — earned
+  // status always reflects the truth, so correcting a day in Day Detail
+  // (e.g. un-completing an accidental Day 30) un-earns the trophy too.
+  function renderTrophyCase() {
+    els.trophyCase.innerHTML = '';
+    TROPHIES.forEach((t) => {
+      const earned = isDayComplete(t.day - 1);
+      const badge = document.createElement('div');
+      badge.className = 'trophy-badge' + (earned ? ' is-earned' : '');
+      badge.title = t.title;
+      badge.innerHTML = `
+        <span class="trophy-badge__icon"></span>
+        <span class="trophy-badge__label">${t.label}</span>
+      `;
+      els.trophyCase.appendChild(badge);
+    });
   }
 
   function recheck() {

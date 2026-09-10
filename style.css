@@ -316,6 +316,14 @@ button { font-family: inherit; }
 .camp-advance-btn:hover { background: rgba(var(--camp-accent-rgb), 0.12); }
 .camp-advance-btn:active { opacity: 0.7; }
 
+/* Higher specificity than the base rule so `hidden` always wins — plain
+   `display: block` on the class loses to the UA [hidden] rule on source
+   order alone, otherwise the button stays visible while "hidden". */
+.camp-advance-btn[hidden],
+.camp-advance-anyway-btn[hidden] {
+  display: none;
+}
+
 /* Quieter than the primary advance button on purpose — available, not encouraged. */
 .camp-advance-anyway-btn {
   display: block;
@@ -669,4 +677,71 @@ button { font-family: inherit; }
 .camp-milestone-body p:last-child {
   margin-bottom: 0;
   color: var(--camp-tan);
+}
+
+/* ===================== TROPHY CASE ===================== */
+.trophy-section {
+  margin-top: 38px;
+}
+
+.trophy-case {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.trophy-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.trophy-badge__icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 1px solid rgba(var(--camp-bone-rgb), 0.16);
+  background: var(--camp-card-bg);
+  transition: border-color 260ms var(--ease), background-color 260ms var(--ease), box-shadow 260ms var(--ease);
+}
+
+.trophy-badge__icon::before {
+  content: '';
+  display: block;
+  width: 16px;
+  height: 34px;
+  background: var(--camp-tan);
+  opacity: 0.32;
+  -webkit-mask: url(assets/dagger-white.png) center / contain no-repeat;
+  mask: url(assets/dagger-white.png) center / contain no-repeat;
+  transition: background-color 260ms var(--ease), opacity 260ms var(--ease);
+}
+
+.trophy-badge.is-earned .trophy-badge__icon {
+  border-color: var(--camp-accent);
+  background: rgba(var(--camp-accent-rgb), 0.12);
+  box-shadow: 0 0 0 1px rgba(var(--camp-accent-rgb), 0.28);
+}
+
+.trophy-badge.is-earned .trophy-badge__icon::before {
+  background: var(--camp-accent);
+  opacity: 1;
+}
+
+.trophy-badge__label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--camp-tan);
+  transition: color 260ms var(--ease);
+}
+
+.trophy-badge.is-earned .trophy-badge__label {
+  color: var(--camp-bone);
 }
