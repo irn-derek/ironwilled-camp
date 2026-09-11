@@ -31,7 +31,15 @@
       <span class="day-line" id="dayLine"></span>
     </header>
 
-    <!-- ===================== STREAK ===================== -->
+    <!-- ===================== CAMP PROGRESS (primary) ===================== -->
+    <section class="camp-progress">
+      <span class="camp-progress__eyebrow" id="campProgressEyebrow">To Camp</span>
+      <span class="camp-progress__number" id="campProgressNumber"></span>
+      <span class="camp-progress__label" id="campProgressLabel">Days to Camp</span>
+      <span class="camp-progress__completions" id="campProgressCompletions"></span>
+    </section>
+
+    <!-- ===================== STREAK (secondary) ===================== -->
     <section class="streak">
       <span class="streak-number" id="streakNumber"></span>
       <span class="streak-label">Day Streak</span>
@@ -90,6 +98,7 @@
         <span class="section-label">Trophy Case</span>
       </div>
       <div class="trophy-case" id="trophyCase"></div>
+      <a class="camp-claim-rewards" id="claimRewardsLink" href="#" target="_blank" rel="noopener" hidden>Claim Your Rewards</a>
     </section>
 
     <!-- ===================== FOOTER ===================== -->
@@ -167,9 +176,28 @@
       <p>Not many commit to something like this. Fewer finish it. You did both.</p>
       <p>Camp is here when you need it again.</p>
     </div>
+    <a class="camp-reward-email-btn" id="milestoneEmailBtn" href="#" target="_blank" rel="noopener">Email Us — This One's Worth It</a>
     <div class="camp-dialog__actions">
       <button type="button" class="camp-dialog__btn" id="milestoneKeepGoing">Keep Going</button>
       <button type="button" class="camp-dialog__btn camp-dialog__btn--ghost" id="milestoneStartOver">Start Over</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== REWARD MILESTONE (flagship days + repeat Camps) ===================== -->
+<div class="camp-overlay" id="rewardOverlay" hidden>
+  <div class="camp-dialog" id="rewardDialog" role="dialog" aria-modal="true" aria-labelledby="rewardHeadline">
+    <div class="camp-dialog__head">
+      <span class="camp-dialog__eyebrow" id="rewardEyebrow">Day 50</span>
+    </div>
+    <p class="camp-dialog__question" id="rewardHeadline">50 days. Milestone reached.</p>
+    <div class="camp-milestone-body">
+      <p>This is one of the big ones — the kind that's worth more than a toast.</p>
+      <p>Email us. We'll talk it over and make sure something finds its way to you.</p>
+    </div>
+    <div class="camp-dialog__actions">
+      <a class="camp-dialog__btn" id="rewardEmailBtn" href="#" target="_blank" rel="noopener">Email Us</a>
+      <button type="button" class="camp-dialog__btn camp-dialog__btn--ghost" id="rewardDismiss">Later</button>
     </div>
   </div>
 </div>

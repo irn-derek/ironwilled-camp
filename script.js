@@ -17,18 +17,17 @@
   const MILESTONE_KEY = 'camp:milestone30:v1';
   const EXTRA_MILESTONES_SEEN_KEY = 'camp:milestonesSeen:v1';
 
-  // Day-count milestones past the original 30 — same completion-gated logic
-  // as Day 30 (the specific day has to be checked off, not just reached),
-  // but lighter-weight: a toast, not a blocking dialog, so the program
-  // doesn't keep interrupting itself every time someone hits a big number.
-  const EXTRA_MILESTONES = {
+  // Day-count check-ins that are encouragement only — a toast, nothing more.
+  const LIGHT_MILESTONES = {
     35: { title: '35 days.', note: 'Five past the finish. Still going.' },
-    50: { title: '50 days.', note: 'Halfway to 100.' },
     55: { title: '55 days.', note: 'This is just what you do now.' },
-    75: { title: '75 days.', note: 'Most people stop before this.' },
-    90: { title: '90 days.', note: 'Ninety, in a row.' },
-    100: { title: '100 days.', note: 'Triple digits. Earned.' },
   };
+
+  // Reward-eligible: the flagship days (matches the Trophy Case) plus every
+  // repeat Camp completion (30, 60, 90, ...). These get the reward dialog and
+  // a pre-filled email, not just a toast — reserved for the genuinely big ones.
+  const FLAGSHIP_DAYS = [50, 75, 100];
+  const REWARD_EMAIL = 'derek@theironwilled.com';
 
   const TROPHIES = [
     { day: PROGRAM_LENGTH, label: 'Camp', title: 'Full Camp — 30 days complete' },
@@ -36,6 +35,14 @@
     { day: 75, label: '75', title: '75 Days' },
     { day: 100, label: '100', title: '100 Days' },
   ];
+
+  function isCampCompletionDay(dayNumber) {
+    return dayNumber % PROGRAM_LENGTH === 0;
+  }
+
+  function isRewardEligible(dayNumber) {
+    return FLAGSHIP_DAYS.includes(dayNumber) || isCampCompletionDay(dayNumber);
+  }
 
   // Every date helper below uses local getters/constructors (getFullYear,
   // getMonth, getDate, setDate, the multi-arg Date constructor) — never
@@ -128,6 +135,10 @@
 
   const els = {
     dayLine: document.getElementById('dayLine'),
+    campProgressEyebrow: document.getElementById('campProgressEyebrow'),
+    campProgressNumber: document.getElementById('campProgressNumber'),
+    campProgressLabel: document.getElementById('campProgressLabel'),
+    campProgressCompletions: document.getElementById('campProgressCompletions'),
     streakNumber: document.getElementById('streakNumber'),
     doneCount: document.getElementById('doneCount'),
     checklist: document.getElementById('checklist'),
@@ -159,9 +170,16 @@
     dayDetailEditBtn: document.getElementById('dayDetailEditBtn'),
     dayDetailCloseBtn: document.getElementById('dayDetailCloseBtn'),
     milestoneOverlay: document.getElementById('milestoneOverlay'),
+    milestoneEmailBtn: document.getElementById('milestoneEmailBtn'),
     milestoneKeepGoing: document.getElementById('milestoneKeepGoing'),
     milestoneStartOver: document.getElementById('milestoneStartOver'),
     trophyCase: document.getElementById('trophyCase'),
+    claimRewardsLink: document.getElementById('claimRewardsLink'),
+    rewardOverlay: document.getElementById('rewardOverlay'),
+    rewardEyebrow: document.getElementById('rewardEyebrow'),
+    rewardHeadline: document.getElementById('rewardHeadline'),
+    rewardEmailBtn: document.getElementById('rewardEmailBtn'),
+    rewardDismiss: document.getElementById('rewardDismiss'),
   };
 
   const THEME_KEY = 'camp:theme:v1';
@@ -208,6 +226,16 @@
 
   function isDayComplete(index) {
     return recordDone(index) === 6;
+  }
+
+  // How many full 30-day cycles have been completed — Camp #1 at day 30,
+  // #2 at day 60, and so on. Requires them in sequence (matches how a
+  // "completion" is meant to be earned); purely derived from the day
+  // records, so it's always the current truth, not a stored counter.
+  function campCompletionCount() {
+    let count = 0;
+    while (isDayComplete(PROGRAM_LENGTH * (count + 1) - 1)) count++;
+    return count;
   }
 
   // Days with no stored record are "upcoming" rather than "missed" — we have
@@ -281,7 +309,7 @@
     toastTimer = setTimeout(hideToast, 3200);
   }
   function showMilestoneToast(dayNumber) {
-    const m = EXTRA_MILESTONES[dayNumber];
+    const m = LIGHT_MILESTONES[dayNumber];
     els.toastText.textContent = m.title;
     els.toastStreak.textContent = m.note;
     els.toast.classList.add('is-visible');
@@ -292,12 +320,81 @@
     els.toast.classList.remove('is-visible');
   }
 
+  // ===================== REWARDS (email us — verified by conversation) =====================
+  // The app can't prove honesty on its own (Advance Anyway and Day Detail
+  // both exist), so rewards aren't auto-granted — they're an invitation to
+  // email, with enough context (start date, today, streak, completions) to
+  // make a quick, casual verification easy on the other end.
+  function currentStreakValue() {
+    const doneToday = state.checked.filter(Boolean).length;
+    return doneToday === 6 ? historicalStreak() + 1 : historicalStreak();
+  }
+
+  function buildMailto(subject, body) {
+    return `mailto:${REWARD_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  }
+
+  function rewardMeta(dayNumber) {
+    if (isCampCompletionDay(dayNumber)) {
+      const campNum = dayNumber / PROGRAM_LENGTH;
+      return { eyebrow: `Camp #${campNum}`, headline: `${dayNumber} days. Camp #${campNum}, done.` };
+    }
+    return { eyebrow: `Day ${dayNumber}`, headline: `${dayNumber} days. Milestone reached.` };
+  }
+
+  function verificationLines() {
+    return [
+      `Program started: ${dateKey(programStart)}`,
+      `Today: ${dateKey(resolveToday())}`,
+      `Current streak: ${currentStreakValue()}`,
+      `Camp completions: ${campCompletionCount()}`,
+    ];
+  }
+
+  function rewardMailBody(meta) {
+    return [`I just hit: ${meta.headline}`, '', 'For verification:', ...verificationLines(), '', '(Sent from the Camp tracker.)'].join('\n');
+  }
+
+  let rewardActiveDay = null;
+  function showRewardMilestone(dayNumber) {
+    rewardActiveDay = dayNumber;
+    const meta = rewardMeta(dayNumber);
+    els.rewardEyebrow.textContent = meta.eyebrow;
+    els.rewardHeadline.textContent = meta.headline;
+    els.rewardEmailBtn.href = buildMailto(`Camp Milestone — ${meta.eyebrow}`, rewardMailBody(meta));
+    els.rewardOverlay.hidden = false;
+  }
+
+  function closeReward() {
+    if (rewardActiveDay != null) markMilestoneSeen(rewardActiveDay);
+    els.rewardOverlay.hidden = true;
+    rewardActiveDay = null;
+  }
+
+  function hasAnyReward() {
+    if (campCompletionCount() >= 1) return true;
+    return FLAGSHIP_DAYS.some((d) => isDayComplete(d - 1));
+  }
+
+  function claimRewardsMailBody() {
+    const completions = campCompletionCount();
+    return [
+      "Here's where I'm at:",
+      `- Camp completions: ${completions}`,
+      ...FLAGSHIP_DAYS.map((d) => `- ${d} days: ${isDayComplete(d - 1) ? 'yes' : 'not yet'}`),
+      '',
+      ...verificationLines(),
+      '',
+      '(Sent from the Camp tracker.)',
+    ].join('\n');
+  }
+
   function processHonestyQueue() {
     if (honestyQueue.length === 0) {
       els.honestyOverlay.hidden = true;
       honestyBatchTotal = 0;
       maybeShowMilestone();
-      checkExtraMilestones();
+      checkOtherMilestones();
       return;
     }
     const item = honestyQueue[0];
@@ -334,13 +431,16 @@
     persistToday();
     render();
     if (prevDone < 6 && newDone === 6) {
-      // Day 30 gets the milestone dialog; the later day-count milestones get
-      // a bigger toast; everything else gets the everyday one. Never both at
-      // once — showing two would step on the moment either way.
+      // Day 30 gets its own dialog; other reward-eligible days (flagship
+      // days and repeat Camp completions) get the reward dialog; the light
+      // check-ins get a bigger toast; everything else gets the everyday one.
+      // Never more than one at once — they'd step on the same moment.
       const dayNumber = todayIndex + 1;
       if (dayNumber === PROGRAM_LENGTH) {
         maybeShowMilestone();
-      } else if (EXTRA_MILESTONES[dayNumber]) {
+      } else if (isRewardEligible(dayNumber)) {
+        showRewardMilestone(dayNumber);
+      } else if (LIGHT_MILESTONES[dayNumber]) {
         showMilestoneToast(dayNumber);
         markMilestoneSeen(dayNumber);
       } else {
@@ -407,6 +507,8 @@
     if (honestyQueue.length > 0) return; // let the honesty backlog clear first
     if (localStorage.getItem(MILESTONE_KEY) === 'true') return;
     if (!isDayComplete(PROGRAM_LENGTH - 1)) return;
+    const meta = rewardMeta(PROGRAM_LENGTH);
+    els.milestoneEmailBtn.href = buildMailto(`Camp Milestone — ${meta.eyebrow}`, rewardMailBody(meta));
     els.milestoneOverlay.hidden = false;
   }
 
@@ -415,7 +517,7 @@
     els.milestoneOverlay.hidden = true;
   }
 
-  // ===================== LATER MILESTONES (35, 50, 55, 75, 90, 100) =====================
+  // ===================== OTHER MILESTONES (35, 50, 55, 75, 90+, 100...) =====================
   function markMilestoneSeen(dayNumber) {
     const seen = loadJSON(EXTRA_MILESTONES_SEEN_KEY);
     seen[dayNumber] = true;
@@ -424,19 +526,26 @@
 
   // Catches the same "already done before you opened the app" case as Day
   // 30 — checked in ascending order so a long absence surfaces the earliest
-  // unseen milestone first, one toast per check rather than piling them up.
-  function checkExtraMilestones() {
+  // unseen milestone first, one at a time rather than piling them up.
+  function checkOtherMilestones() {
     if (honestyQueue.length > 0) return;
     if (!els.milestoneOverlay.hidden) return;
+    if (!els.rewardOverlay.hidden) return;
     const seen = loadJSON(EXTRA_MILESTONES_SEEN_KEY);
-    const days30Plus = Object.keys(EXTRA_MILESTONES).map(Number).sort((a, b) => a - b);
-    for (const dayNumber of days30Plus) {
+    const candidates = new Set(Object.keys(LIGHT_MILESTONES).map(Number));
+    FLAGSHIP_DAYS.forEach((d) => candidates.add(d));
+    for (let k = 2; PROGRAM_LENGTH * k <= todayIndex + 1; k++) candidates.add(PROGRAM_LENGTH * k);
+    const ordered = [...candidates].sort((a, b) => a - b);
+    for (const dayNumber of ordered) {
       if (seen[dayNumber]) continue;
-      if (isDayComplete(dayNumber - 1)) {
+      if (!isDayComplete(dayNumber - 1)) continue;
+      if (isRewardEligible(dayNumber)) {
+        showRewardMilestone(dayNumber);
+      } else {
         showMilestoneToast(dayNumber);
         markMilestoneSeen(dayNumber);
-        return;
       }
+      return;
     }
   }
 
@@ -551,6 +660,25 @@
     els.streakNumber.textContent = String(streak);
     els.doneCount.textContent = `${doneToday} / 6`;
 
+    // The main event: not "how far into the program," but "how close to
+    // completing Camp." Retargets itself the instant a Camp is finished —
+    // completions is derived fresh every render, so the next target (Camp
+    // #2, #3, ...) just appears with no special-casing for "just finished."
+    const completions = campCompletionCount();
+    const nextCampDay = PROGRAM_LENGTH * (completions + 1);
+    const daysToNextCamp = Math.max(0, nextCampDay - (todayIndex + 1));
+    const targetLabel = completions === 0 ? 'Camp' : `Camp #${completions + 1}`;
+    els.campProgressEyebrow.textContent = `To ${targetLabel}`;
+    els.campProgressNumber.textContent = String(daysToNextCamp);
+    els.campProgressLabel.textContent = `Days to ${targetLabel}`;
+    els.campProgressCompletions.textContent = `Camp Completions: ${completions}`;
+
+    const anyReward = hasAnyReward();
+    els.claimRewardsLink.hidden = !anyReward;
+    if (anyReward) {
+      els.claimRewardsLink.href = buildMailto('Camp Rewards', claimRewardsMailBody());
+    }
+
     // Through Day 30 the log is the fixed program grid. From Day 31 on, it
     // becomes a rolling window of the most recent 30 days — always 30 cells,
     // sliding forward with today — so finishing the program never means the
@@ -630,6 +758,8 @@
   });
   els.milestoneKeepGoing.addEventListener('click', dismissMilestone);
   els.milestoneStartOver.addEventListener('click', performReset);
+  els.rewardEmailBtn.addEventListener('click', closeReward);
+  els.rewardDismiss.addEventListener('click', closeReward);
 
   // Catches a calendar rollover while the tab stays open — a light polling
   // safety net plus an immediate recheck when the tab regains focus/visibility,

@@ -134,12 +134,63 @@ button { font-family: inherit; }
   margin-top: 16px;
 }
 
-/* ===================== STREAK ===================== */
+/* ===================== CAMP PROGRESS (primary) ===================== */
+/* The one thing the app wants you looking at: how close to Camp, not how
+   far into the program. Accent-colored to read as the goal, distinct from
+   the bone-colored streak (the actual count) right below it. */
+.camp-progress {
+  margin-top: 34px;
+  border-top: 1px solid rgba(var(--camp-accent-rgb), 0.3);
+  border-bottom: 1px solid rgba(var(--camp-accent-rgb), 0.3);
+  padding: 28px 0 26px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.camp-progress__eyebrow {
+  font-family: var(--font-mono);
+  font-weight: 400;
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--camp-tan);
+}
+
+.camp-progress__number {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 76px;
+  line-height: 0.86;
+  color: var(--camp-accent);
+  letter-spacing: 0.02em;
+}
+
+.camp-progress__label {
+  font-family: var(--font-mono);
+  font-weight: 400;
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--camp-bone);
+}
+
+.camp-progress__completions {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--camp-tan);
+  margin-top: 4px;
+}
+
+/* ===================== STREAK (secondary) ===================== */
 .streak {
-  margin-top: 38px;
+  margin-top: 34px;
   border-top: 1px solid rgba(var(--camp-bone-rgb), 0.12);
   border-bottom: 1px solid rgba(var(--camp-bone-rgb), 0.12);
-  padding: 26px 0 24px;
+  padding: 22px 0 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -149,7 +200,7 @@ button { font-family: inherit; }
 .streak-number {
   font-family: var(--font-mono);
   font-weight: 500;
-  font-size: 76px;
+  font-size: 56px;
   line-height: 0.86;
   color: var(--camp-bone);
   letter-spacing: 0.02em;
@@ -679,6 +730,30 @@ button { font-family: inherit; }
   color: var(--camp-tan);
 }
 
+/* Reward email CTA — same weight as the primary advance button, since
+   claiming something you earned is a positive action, not a fallback one. */
+.camp-reward-email-btn {
+  display: block;
+  width: 100%;
+  margin-bottom: 16px;
+  padding: 13px 16px;
+  background: transparent;
+  color: var(--camp-bone);
+  border: 1px solid var(--camp-accent);
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 200ms var(--ease), opacity 200ms var(--ease);
+}
+
+.camp-reward-email-btn:hover { background: rgba(var(--camp-accent-rgb), 0.12); }
+.camp-reward-email-btn:active { opacity: 0.7; }
+
 /* ===================== TROPHY CASE ===================== */
 .trophy-section {
   margin-top: 38px;
@@ -744,4 +819,27 @@ button { font-family: inherit; }
 
 .trophy-badge.is-earned .trophy-badge__label {
   color: var(--camp-bone);
+}
+
+.camp-claim-rewards {
+  display: block;
+  margin-top: 18px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--camp-accent);
+  text-decoration: none;
+  transition: opacity 200ms var(--ease);
+}
+
+.camp-claim-rewards:hover { opacity: 0.75; }
+
+/* Same class of bug as .camp-overlay/.camp-advance-btn: an unconditional
+   `display` on the class beats the UA [hidden] rule at equal specificity
+   on source order alone. Always pair a `hidden`-toggled element's class
+   with this override, not just the ones caught by testing. */
+.camp-claim-rewards[hidden] {
+  display: none;
 }
