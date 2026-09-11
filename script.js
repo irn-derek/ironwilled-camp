@@ -27,7 +27,7 @@
   // repeat Camp completion (30, 60, 90, ...). These get the reward dialog and
   // a pre-filled email, not just a toast — reserved for the genuinely big ones.
   const FLAGSHIP_DAYS = [50, 75, 100];
-  const REWARD_EMAIL = 'derek@theironwilled.com';
+  const REWARD_EMAIL = 'contact@theironwilled.com';
 
   // Camp itself is the featured achievement (rendered separately, bigger);
   // these are the secondary ones.
@@ -181,7 +181,6 @@
     claimEmailAddress: document.getElementById('claimEmailAddress'),
     claimMessage: document.getElementById('claimMessage'),
     claimCopyBtn: document.getElementById('claimCopyBtn'),
-    claimMailtoBtn: document.getElementById('claimMailtoBtn'),
     claimCloseBtn: document.getElementById('claimCloseBtn'),
     rewardOverlay: document.getElementById('rewardOverlay'),
     rewardEyebrow: document.getElementById('rewardEyebrow'),
@@ -338,10 +337,6 @@
     return doneToday === 6 ? historicalStreak() + 1 : historicalStreak();
   }
 
-  function buildMailto(subject, body) {
-    return `mailto:${REWARD_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  }
-
   function rewardMeta(dayNumber) {
     if (isCampCompletionDay(dayNumber)) {
       const campNum = dayNumber / PROGRAM_LENGTH;
@@ -369,7 +364,6 @@
     const meta = rewardMeta(dayNumber);
     els.rewardEyebrow.textContent = meta.eyebrow;
     els.rewardHeadline.textContent = meta.headline;
-    els.rewardEmailBtn.href = buildMailto(`Camp Milestone — ${meta.eyebrow}`, rewardMailBody(meta));
     els.rewardOverlay.hidden = false;
   }
 
@@ -397,16 +391,14 @@
     ].join('\n');
   }
 
-  // Every "email us" path lands here rather than firing a mailto directly.
-  // A mailto: link is silently inert in a browser with no mail handler
-  // registered, which looks exactly like a broken button — showing the
-  // address and the message, copyable, always works. The mail-app handoff
-  // stays available as a convenience for anyone who does have one.
-  function openClaimDialog(eyebrow, subject, body) {
+  // Every "email us" path lands here. No mailto: anywhere — it's silently
+  // inert in a browser with no mail handler registered, which is
+  // indistinguishable from a dead button and can't be feature-detected.
+  // Showing the address and the message to copy works everywhere.
+  function openClaimDialog(eyebrow, body) {
     els.claimEyebrow.textContent = eyebrow;
     els.claimEmailAddress.textContent = REWARD_EMAIL;
     els.claimMessage.textContent = body;
-    els.claimMailtoBtn.href = buildMailto(subject, body);
     els.claimCopyBtn.textContent = 'Copy Details';
     els.claimOverlay.hidden = false;
   }
@@ -567,8 +559,6 @@
     if (honestyQueue.length > 0) return; // let the honesty backlog clear first
     if (localStorage.getItem(MILESTONE_KEY) === 'true') return;
     if (!isDayComplete(PROGRAM_LENGTH - 1)) return;
-    const meta = rewardMeta(PROGRAM_LENGTH);
-    els.milestoneEmailBtn.href = buildMailto(`Camp Milestone — ${meta.eyebrow}`, rewardMailBody(meta));
     els.milestoneOverlay.hidden = false;
   }
 
@@ -853,23 +843,20 @@
   els.milestoneStartOver.addEventListener('click', performReset);
 
   els.claimRewardsLink.addEventListener('click', () => {
-    openClaimDialog('Rewards', 'Camp Rewards', claimRewardsMailBody());
+    openClaimDialog('Rewards', claimRewardsMailBody());
   });
 
   // The milestone dialog stays open underneath — closing the claim dialog
   // puts them back on Keep Going / Start Over.
-  els.milestoneEmailBtn.addEventListener('click', (e) => {
-    e.preventDefault();
+  els.milestoneEmailBtn.addEventListener('click', () => {
     const meta = rewardMeta(PROGRAM_LENGTH);
-    openClaimDialog(meta.eyebrow, `Camp Milestone — ${meta.eyebrow}`, rewardMailBody(meta));
+    openClaimDialog(meta.eyebrow, rewardMailBody(meta));
   });
 
-  els.rewardEmailBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    const dayNumber = rewardActiveDay;
-    const meta = rewardMeta(dayNumber != null ? dayNumber : PROGRAM_LENGTH);
+  els.rewardEmailBtn.addEventListener('click', () => {
+    const meta = rewardMeta(rewardActiveDay != null ? rewardActiveDay : PROGRAM_LENGTH);
     closeReward();
-    openClaimDialog(meta.eyebrow, `Camp Milestone — ${meta.eyebrow}`, rewardMailBody(meta));
+    openClaimDialog(meta.eyebrow, rewardMailBody(meta));
   });
   els.rewardDismiss.addEventListener('click', closeReward);
 

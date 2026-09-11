@@ -180,7 +180,7 @@
       <p>Not many commit to something like this. Fewer finish it. You did both.</p>
       <p>Camp is here when you need it again.</p>
     </div>
-    <a class="camp-reward-email-btn" id="milestoneEmailBtn" href="#">Email Us — This One's Worth It</a>
+    <button type="button" class="camp-reward-email-btn" id="milestoneEmailBtn">Email Us — This One's Worth It</button>
     <div class="camp-dialog__actions">
       <button type="button" class="camp-dialog__btn" id="milestoneKeepGoing">Keep Going</button>
       <button type="button" class="camp-dialog__btn camp-dialog__btn--ghost" id="milestoneStartOver">Start Over</button>
@@ -200,7 +200,7 @@
       <p>Email us. We'll talk it over and make sure something finds its way to you.</p>
     </div>
     <div class="camp-dialog__actions">
-      <a class="camp-dialog__btn" id="rewardEmailBtn" href="#">Email Us</a>
+      <button type="button" class="camp-dialog__btn" id="rewardEmailBtn">Email Us</button>
       <button type="button" class="camp-dialog__btn camp-dialog__btn--ghost" id="rewardDismiss">Later</button>
     </div>
   </div>
@@ -208,27 +208,29 @@
 
 <!-- ===================== CLAIM DETAILS =====================
      Last in the DOM on purpose: it stacks above the milestone/reward
-     dialogs, since it can be opened from either of them. Everything is
-     shown and copyable because a mailto: link does nothing at all in a
-     browser with no mail handler registered — this path always works. -->
+     dialogs, since it can be opened from either of them. No mailto: link
+     anywhere — it does nothing at all, silently, in a browser with no mail
+     handler registered, and there's no way to detect that ahead of time.
+     Showing the address and the message to copy always works. -->
 <div class="camp-overlay" id="claimOverlay" hidden>
   <div class="camp-dialog" id="claimDialog" role="dialog" aria-modal="true" aria-labelledby="claimHeadline">
     <div class="camp-dialog__head">
       <span class="camp-dialog__eyebrow" id="claimEyebrow">Rewards</span>
     </div>
     <p class="camp-dialog__question" id="claimHeadline">Send us this.</p>
+    <div class="camp-milestone-body">
+      <p>Copy it, email it over, and we'll take it from there.</p>
+    </div>
 
     <div class="camp-claim-field">
       <span class="camp-claim-field__label">To</span>
-      <span class="camp-claim-field__value" id="claimEmailAddress">derek@theironwilled.com</span>
+      <span class="camp-claim-field__value" id="claimEmailAddress">contact@theironwilled.com</span>
     </div>
 
     <pre class="camp-claim-message" id="claimMessage"></pre>
 
-    <button type="button" class="camp-reward-email-btn" id="claimCopyBtn">Copy Details</button>
-
     <div class="camp-dialog__actions">
-      <a class="camp-dialog__btn" id="claimMailtoBtn" href="#">Email App</a>
+      <button type="button" class="camp-dialog__btn" id="claimCopyBtn">Copy Details</button>
       <button type="button" class="camp-dialog__btn camp-dialog__btn--ghost" id="claimCloseBtn">Close</button>
     </div>
   </div>
