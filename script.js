@@ -340,22 +340,41 @@
   function rewardMeta(dayNumber) {
     if (isCampCompletionDay(dayNumber)) {
       const campNum = dayNumber / PROGRAM_LENGTH;
-      return { eyebrow: `Camp #${campNum}`, headline: `${dayNumber} days. Camp #${campNum}, done.` };
+      return {
+        eyebrow: `Camp #${campNum}`,
+        headline: `${dayNumber} days. Camp #${campNum}, done.`,
+        claim: `Camp #${campNum} — ${dayNumber} days.`,
+      };
     }
-    return { eyebrow: `Day ${dayNumber}`, headline: `${dayNumber} days. Milestone reached.` };
+    return {
+      eyebrow: `Day ${dayNumber}`,
+      headline: `${dayNumber} days. Earned.`,
+      claim: `${dayNumber} days.`,
+    };
   }
 
   function verificationLines() {
     return [
-      `Program started: ${dateKey(programStart)}`,
+      `Started: ${dateKey(programStart)}`,
       `Today: ${dateKey(resolveToday())}`,
-      `Current streak: ${currentStreakValue()}`,
-      `Camp completions: ${campCompletionCount()}`,
+      `Streak: ${currentStreakValue()}`,
+      `Camps completed: ${campCompletionCount()}`,
     ];
   }
 
+  // The message is the integrity check — the attestation line is the point
+  // of it, not the numbers underneath.
   function rewardMailBody(meta) {
-    return [`I just hit: ${meta.headline}`, '', 'For verification:', ...verificationLines(), '', '(Sent from the Camp tracker.)'].join('\n');
+    return [
+      `Claiming: ${meta.claim}`,
+      '',
+      'I did the work. Every day on that log, I earned.',
+      '',
+      'Record:',
+      ...verificationLines(),
+      '',
+      '— Sent from Camp.',
+    ].join('\n');
   }
 
   let rewardActiveDay = null;
@@ -380,14 +399,19 @@
 
   function claimRewardsMailBody() {
     const completions = campCompletionCount();
+    const earned = [
+      completions > 0 ? `Camp x${completions}` : null,
+      ...FLAGSHIP_DAYS.map((d) => (isDayComplete(d - 1) ? `${d} days` : null)),
+    ].filter(Boolean);
     return [
-      "Here's where I'm at:",
-      `- Camp completions: ${completions}`,
-      ...FLAGSHIP_DAYS.map((d) => `- ${d} days: ${isDayComplete(d - 1) ? 'yes' : 'not yet'}`),
+      `Claiming: ${earned.join(', ')}`,
       '',
+      'I did the work. Every day on that log, I earned.',
+      '',
+      'Record:',
       ...verificationLines(),
       '',
-      '(Sent from the Camp tracker.)',
+      '— Sent from Camp.',
     ].join('\n');
   }
 
@@ -399,7 +423,7 @@
     els.claimEyebrow.textContent = eyebrow;
     els.claimEmailAddress.textContent = REWARD_EMAIL;
     els.claimMessage.textContent = body;
-    els.claimCopyBtn.textContent = 'Copy Details';
+    els.claimCopyBtn.textContent = 'Copy Message';
     els.claimOverlay.hidden = false;
   }
 
@@ -428,8 +452,8 @@
 
   function copyClaimDetails() {
     const text = `To: ${REWARD_EMAIL}\n\n${els.claimMessage.textContent}`;
-    const done = () => { els.claimCopyBtn.textContent = 'Copied.'; };
-    const failed = () => { els.claimCopyBtn.textContent = 'Select the text above to copy.'; };
+    const done = () => { els.claimCopyBtn.textContent = 'Copied. Now send it.'; };
+    const failed = () => { els.claimCopyBtn.textContent = 'Select the text above.'; };
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text).then(done).catch(() => {
         if (fallbackCopy(text)) done();
