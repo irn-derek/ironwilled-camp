@@ -31,15 +31,7 @@
       <span class="day-line" id="dayLine"></span>
     </header>
 
-    <!-- ===================== CAMP PROGRESS (primary) ===================== -->
-    <section class="camp-progress">
-      <span class="camp-progress__eyebrow" id="campProgressEyebrow">To Camp</span>
-      <span class="camp-progress__number" id="campProgressNumber"></span>
-      <span class="camp-progress__label" id="campProgressLabel">Days to Camp</span>
-      <span class="camp-progress__completions" id="campProgressCompletions"></span>
-    </section>
-
-    <!-- ===================== STREAK (secondary) ===================== -->
+    <!-- ===================== STREAK ===================== -->
     <section class="streak">
       <span class="streak-number" id="streakNumber"></span>
       <span class="streak-label">Day Streak</span>
@@ -92,13 +84,25 @@
       </div>
     </section>
 
-    <!-- ===================== TROPHY CASE ===================== -->
+    <!-- ===================== ACHIEVEMENTS ===================== -->
     <section class="trophy-section">
       <div class="section-row">
-        <span class="section-label">Trophy Case</span>
+        <span class="section-label">Achievements</span>
       </div>
+
+      <!-- Camp completion is the featured achievement — everything else here is secondary to it. -->
+      <div class="camp-achievement-primary" id="campAchievementPrimary">
+        <span class="camp-achievement-primary__icon"></span>
+        <span class="camp-achievement-primary__number" id="campAchievementCount">0</span>
+        <span class="camp-achievement-primary__label">Camp Completions</span>
+      </div>
+
+      <span class="trophy-case__label">Milestones</span>
       <div class="trophy-case" id="trophyCase"></div>
-      <a class="camp-claim-rewards" id="claimRewardsLink" href="#" target="_blank" rel="noopener" hidden>Claim Your Rewards</a>
+
+      <div class="camp-achievement-list" id="achievementList" hidden></div>
+
+      <a class="camp-claim-rewards" id="claimRewardsLink" href="#" hidden>Claim Your Rewards</a>
     </section>
 
     <!-- ===================== FOOTER ===================== -->
@@ -176,7 +180,7 @@
       <p>Not many commit to something like this. Fewer finish it. You did both.</p>
       <p>Camp is here when you need it again.</p>
     </div>
-    <a class="camp-reward-email-btn" id="milestoneEmailBtn" href="#" target="_blank" rel="noopener">Email Us — This One's Worth It</a>
+    <a class="camp-reward-email-btn" id="milestoneEmailBtn" href="#">Email Us — This One's Worth It</a>
     <div class="camp-dialog__actions">
       <button type="button" class="camp-dialog__btn" id="milestoneKeepGoing">Keep Going</button>
       <button type="button" class="camp-dialog__btn camp-dialog__btn--ghost" id="milestoneStartOver">Start Over</button>
@@ -196,7 +200,7 @@
       <p>Email us. We'll talk it over and make sure something finds its way to you.</p>
     </div>
     <div class="camp-dialog__actions">
-      <a class="camp-dialog__btn" id="rewardEmailBtn" href="#" target="_blank" rel="noopener">Email Us</a>
+      <a class="camp-dialog__btn" id="rewardEmailBtn" href="#">Email Us</a>
       <button type="button" class="camp-dialog__btn camp-dialog__btn--ghost" id="rewardDismiss">Later</button>
     </div>
   </div>

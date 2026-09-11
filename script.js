@@ -29,8 +29,9 @@
   const FLAGSHIP_DAYS = [50, 75, 100];
   const REWARD_EMAIL = 'derek@theironwilled.com';
 
+  // Camp itself is the featured achievement (rendered separately, bigger);
+  // these are the secondary ones.
   const TROPHIES = [
-    { day: PROGRAM_LENGTH, label: 'Camp', title: 'Full Camp — 30 days complete' },
     { day: 50, label: '50', title: '50 Days' },
     { day: 75, label: '75', title: '75 Days' },
     { day: 100, label: '100', title: '100 Days' },
@@ -135,10 +136,6 @@
 
   const els = {
     dayLine: document.getElementById('dayLine'),
-    campProgressEyebrow: document.getElementById('campProgressEyebrow'),
-    campProgressNumber: document.getElementById('campProgressNumber'),
-    campProgressLabel: document.getElementById('campProgressLabel'),
-    campProgressCompletions: document.getElementById('campProgressCompletions'),
     streakNumber: document.getElementById('streakNumber'),
     doneCount: document.getElementById('doneCount'),
     checklist: document.getElementById('checklist'),
@@ -174,6 +171,9 @@
     milestoneKeepGoing: document.getElementById('milestoneKeepGoing'),
     milestoneStartOver: document.getElementById('milestoneStartOver'),
     trophyCase: document.getElementById('trophyCase'),
+    campAchievementPrimary: document.getElementById('campAchievementPrimary'),
+    campAchievementCount: document.getElementById('campAchievementCount'),
+    achievementList: document.getElementById('achievementList'),
     claimRewardsLink: document.getElementById('claimRewardsLink'),
     rewardOverlay: document.getElementById('rewardOverlay'),
     rewardEyebrow: document.getElementById('rewardEyebrow'),
@@ -660,19 +660,6 @@
     els.streakNumber.textContent = String(streak);
     els.doneCount.textContent = `${doneToday} / 6`;
 
-    // The main event: not "how far into the program," but "how close to
-    // completing Camp." Retargets itself the instant a Camp is finished —
-    // completions is derived fresh every render, so the next target (Camp
-    // #2, #3, ...) just appears with no special-casing for "just finished."
-    const completions = campCompletionCount();
-    const nextCampDay = PROGRAM_LENGTH * (completions + 1);
-    const daysToNextCamp = Math.max(0, nextCampDay - (todayIndex + 1));
-    const targetLabel = completions === 0 ? 'Camp' : `Camp #${completions + 1}`;
-    els.campProgressEyebrow.textContent = `To ${targetLabel}`;
-    els.campProgressNumber.textContent = String(daysToNextCamp);
-    els.campProgressLabel.textContent = `Days to ${targetLabel}`;
-    els.campProgressCompletions.textContent = `Camp Completions: ${completions}`;
-
     const anyReward = hasAnyReward();
     els.claimRewardsLink.hidden = !anyReward;
     if (anyReward) {
@@ -710,6 +697,56 @@
     els.advanceAnywayBtn.hidden = doneToday === 6;
 
     renderTrophyCase();
+    renderAchievementPrimary();
+    renderAchievementList();
+  }
+
+  // Camp completion is the featured achievement in this section — bigger
+  // badge, its own count, rendered separately from the secondary ones.
+  function renderAchievementPrimary() {
+    const completions = campCompletionCount();
+    els.campAchievementPrimary.classList.toggle('is-earned', completions > 0);
+    els.campAchievementCount.textContent = String(completions);
+  }
+
+  // Every earned Camp completion and flagship day, oldest first, with the
+  // actual calendar date it happened — derived the same way everything
+  // else here is, straight from the day records.
+  function achievementHistory() {
+    const items = [];
+    const completions = campCompletionCount();
+    for (let k = 1; k <= completions; k++) {
+      items.push({ dayIndex: PROGRAM_LENGTH * k - 1, label: `Camp #${k}` });
+    }
+    FLAGSHIP_DAYS.forEach((d) => {
+      if (isDayComplete(d - 1)) items.push({ dayIndex: d - 1, label: `${d} Days` });
+    });
+    items.sort((a, b) => a.dayIndex - b.dayIndex);
+    return items;
+  }
+
+  function formatAchievementDate(dayIndex) {
+    return addDays(programStart, dayIndex).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  }
+
+  function renderAchievementList() {
+    const items = achievementHistory();
+    els.achievementList.hidden = items.length === 0;
+    els.achievementList.innerHTML = '';
+    items.forEach((item) => {
+      const row = document.createElement('div');
+      row.className = 'camp-achievement-row';
+      row.innerHTML = `
+        <span class="camp-achievement-row__day">Day ${item.dayIndex + 1}</span>
+        <span class="camp-achievement-row__label">${item.label}</span>
+        <span class="camp-achievement-row__date">${formatAchievementDate(item.dayIndex)}</span>
+      `;
+      els.achievementList.appendChild(row);
+    });
   }
 
   // Purely derived from the day records, same as everything else — earned

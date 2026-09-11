@@ -134,63 +134,12 @@ button { font-family: inherit; }
   margin-top: 16px;
 }
 
-/* ===================== CAMP PROGRESS (primary) ===================== */
-/* The one thing the app wants you looking at: how close to Camp, not how
-   far into the program. Accent-colored to read as the goal, distinct from
-   the bone-colored streak (the actual count) right below it. */
-.camp-progress {
-  margin-top: 34px;
-  border-top: 1px solid rgba(var(--camp-accent-rgb), 0.3);
-  border-bottom: 1px solid rgba(var(--camp-accent-rgb), 0.3);
-  padding: 28px 0 26px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-
-.camp-progress__eyebrow {
-  font-family: var(--font-mono);
-  font-weight: 400;
-  font-size: 11px;
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
-  color: var(--camp-tan);
-}
-
-.camp-progress__number {
-  font-family: var(--font-mono);
-  font-weight: 500;
-  font-size: 76px;
-  line-height: 0.86;
-  color: var(--camp-accent);
-  letter-spacing: 0.02em;
-}
-
-.camp-progress__label {
-  font-family: var(--font-mono);
-  font-weight: 400;
-  font-size: 11px;
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
-  color: var(--camp-bone);
-}
-
-.camp-progress__completions {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--camp-tan);
-  margin-top: 4px;
-}
-
-/* ===================== STREAK (secondary) ===================== */
+/* ===================== STREAK ===================== */
 .streak {
-  margin-top: 34px;
+  margin-top: 38px;
   border-top: 1px solid rgba(var(--camp-bone-rgb), 0.12);
   border-bottom: 1px solid rgba(var(--camp-bone-rgb), 0.12);
-  padding: 22px 0 20px;
+  padding: 26px 0 24px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -200,7 +149,7 @@ button { font-family: inherit; }
 .streak-number {
   font-family: var(--font-mono);
   font-weight: 500;
-  font-size: 56px;
+  font-size: 76px;
   line-height: 0.86;
   color: var(--camp-bone);
   letter-spacing: 0.02em;
@@ -754,14 +703,94 @@ button { font-family: inherit; }
 .camp-reward-email-btn:hover { background: rgba(var(--camp-accent-rgb), 0.12); }
 .camp-reward-email-btn:active { opacity: 0.7; }
 
-/* ===================== TROPHY CASE ===================== */
+/* ===================== ACHIEVEMENTS ===================== */
 .trophy-section {
   margin-top: 38px;
 }
 
+/* Camp completion — the featured achievement. Everything else in this
+   section (the flagship-day badges, the history list) is secondary to it. */
+.camp-achievement-primary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 24px 0 28px;
+  border-bottom: 1px solid rgba(var(--camp-bone-rgb), 0.12);
+  margin-bottom: 24px;
+}
+
+.camp-achievement-primary__icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  border: 1px solid rgba(var(--camp-bone-rgb), 0.16);
+  background: var(--camp-card-bg);
+  transition: border-color 260ms var(--ease), background-color 260ms var(--ease), box-shadow 260ms var(--ease);
+}
+
+.camp-achievement-primary__icon::before {
+  content: '';
+  display: block;
+  width: 24px;
+  height: 51px;
+  background: var(--camp-tan);
+  opacity: 0.32;
+  -webkit-mask: url(assets/dagger-white.png) center / contain no-repeat;
+  mask: url(assets/dagger-white.png) center / contain no-repeat;
+  transition: background-color 260ms var(--ease), opacity 260ms var(--ease);
+}
+
+.camp-achievement-primary.is-earned .camp-achievement-primary__icon {
+  border-color: var(--camp-accent);
+  background: rgba(var(--camp-accent-rgb), 0.12);
+  box-shadow: 0 0 0 1px rgba(var(--camp-accent-rgb), 0.28);
+}
+
+.camp-achievement-primary.is-earned .camp-achievement-primary__icon::before {
+  background: var(--camp-accent);
+  opacity: 1;
+}
+
+.camp-achievement-primary__number {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 40px;
+  line-height: 0.86;
+  color: var(--camp-tan);
+  letter-spacing: 0.02em;
+  transition: color 260ms var(--ease);
+}
+
+.camp-achievement-primary.is-earned .camp-achievement-primary__number {
+  color: var(--camp-accent);
+}
+
+.camp-achievement-primary__label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--camp-tan);
+}
+
+.trophy-case__label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--camp-tan);
+  margin-bottom: 14px;
+}
+
 .trophy-case {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 12px;
 }
 
@@ -819,6 +848,54 @@ button { font-family: inherit; }
 
 .trophy-badge.is-earned .trophy-badge__label {
   color: var(--camp-bone);
+}
+
+/* Dated history — every Camp completion and flagship day, oldest first. */
+.camp-achievement-list {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid rgba(var(--camp-bone-rgb), 0.10);
+}
+
+.camp-achievement-list[hidden] {
+  display: none;
+}
+
+.camp-achievement-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(var(--camp-bone-rgb), 0.10);
+}
+
+.camp-achievement-row__day {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--camp-tan);
+}
+
+.camp-achievement-row__label {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--camp-bone);
+}
+
+.camp-achievement-row__date {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--camp-tan);
 }
 
 .camp-claim-rewards {
