@@ -175,6 +175,14 @@
     campAchievementCount: document.getElementById('campAchievementCount'),
     achievementList: document.getElementById('achievementList'),
     claimRewardsLink: document.getElementById('claimRewardsLink'),
+    claimOverlay: document.getElementById('claimOverlay'),
+    claimEyebrow: document.getElementById('claimEyebrow'),
+    claimHeadline: document.getElementById('claimHeadline'),
+    claimEmailAddress: document.getElementById('claimEmailAddress'),
+    claimMessage: document.getElementById('claimMessage'),
+    claimCopyBtn: document.getElementById('claimCopyBtn'),
+    claimMailtoBtn: document.getElementById('claimMailtoBtn'),
+    claimCloseBtn: document.getElementById('claimCloseBtn'),
     rewardOverlay: document.getElementById('rewardOverlay'),
     rewardEyebrow: document.getElementById('rewardEyebrow'),
     rewardHeadline: document.getElementById('rewardHeadline'),
@@ -387,6 +395,58 @@
       '',
       '(Sent from the Camp tracker.)',
     ].join('\n');
+  }
+
+  // Every "email us" path lands here rather than firing a mailto directly.
+  // A mailto: link is silently inert in a browser with no mail handler
+  // registered, which looks exactly like a broken button — showing the
+  // address and the message, copyable, always works. The mail-app handoff
+  // stays available as a convenience for anyone who does have one.
+  function openClaimDialog(eyebrow, subject, body) {
+    els.claimEyebrow.textContent = eyebrow;
+    els.claimEmailAddress.textContent = REWARD_EMAIL;
+    els.claimMessage.textContent = body;
+    els.claimMailtoBtn.href = buildMailto(subject, body);
+    els.claimCopyBtn.textContent = 'Copy Details';
+    els.claimOverlay.hidden = false;
+  }
+
+  function closeClaimDialog() {
+    els.claimOverlay.hidden = true;
+  }
+
+  function fallbackCopy(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.top = '0';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    let ok = false;
+    try {
+      ok = document.execCommand('copy');
+    } catch (e) {
+      ok = false;
+    }
+    document.body.removeChild(ta);
+    return ok;
+  }
+
+  function copyClaimDetails() {
+    const text = `To: ${REWARD_EMAIL}\n\n${els.claimMessage.textContent}`;
+    const done = () => { els.claimCopyBtn.textContent = 'Copied.'; };
+    const failed = () => { els.claimCopyBtn.textContent = 'Select the text above to copy.'; };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(() => {
+        if (fallbackCopy(text)) done();
+        else failed();
+      });
+      return;
+    }
+    if (fallbackCopy(text)) done();
+    else failed();
   }
 
   function processHonestyQueue() {
@@ -660,11 +720,7 @@
     els.streakNumber.textContent = String(streak);
     els.doneCount.textContent = `${doneToday} / 6`;
 
-    const anyReward = hasAnyReward();
-    els.claimRewardsLink.hidden = !anyReward;
-    if (anyReward) {
-      els.claimRewardsLink.href = buildMailto('Camp Rewards', claimRewardsMailBody());
-    }
+    els.claimRewardsLink.hidden = !hasAnyReward();
 
     // Through Day 30 the log is the fixed program grid. From Day 31 on, it
     // becomes a rolling window of the most recent 30 days — always 30 cells,
@@ -795,8 +851,33 @@
   });
   els.milestoneKeepGoing.addEventListener('click', dismissMilestone);
   els.milestoneStartOver.addEventListener('click', performReset);
-  els.rewardEmailBtn.addEventListener('click', closeReward);
+
+  els.claimRewardsLink.addEventListener('click', () => {
+    openClaimDialog('Rewards', 'Camp Rewards', claimRewardsMailBody());
+  });
+
+  // The milestone dialog stays open underneath — closing the claim dialog
+  // puts them back on Keep Going / Start Over.
+  els.milestoneEmailBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    const meta = rewardMeta(PROGRAM_LENGTH);
+    openClaimDialog(meta.eyebrow, `Camp Milestone — ${meta.eyebrow}`, rewardMailBody(meta));
+  });
+
+  els.rewardEmailBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    const dayNumber = rewardActiveDay;
+    const meta = rewardMeta(dayNumber != null ? dayNumber : PROGRAM_LENGTH);
+    closeReward();
+    openClaimDialog(meta.eyebrow, `Camp Milestone — ${meta.eyebrow}`, rewardMailBody(meta));
+  });
   els.rewardDismiss.addEventListener('click', closeReward);
+
+  els.claimCopyBtn.addEventListener('click', copyClaimDetails);
+  els.claimCloseBtn.addEventListener('click', closeClaimDialog);
+  els.claimOverlay.addEventListener('click', (e) => {
+    if (e.target === els.claimOverlay) closeClaimDialog();
+  });
 
   // Catches a calendar rollover while the tab stays open — a light polling
   // safety net plus an immediate recheck when the tab regains focus/visibility,

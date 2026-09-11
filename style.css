@@ -594,8 +594,14 @@ button { font-family: inherit; }
   gap: 10px;
 }
 
+/* Flex-centered and underline-free so the <a> variants (the mail-app
+   handoff) sit identically to the <button> ones. */
 .camp-dialog__btn {
   flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
   padding: 13px 16px;
   background: var(--camp-accent);
   color: var(--camp-ink);
@@ -606,6 +612,7 @@ button { font-family: inherit; }
   font-weight: 500;
   letter-spacing: 0.18em;
   text-transform: uppercase;
+  text-decoration: none;
   cursor: pointer;
   transition: opacity 200ms var(--ease);
 }
@@ -900,7 +907,11 @@ button { font-family: inherit; }
 
 .camp-claim-rewards {
   display: block;
+  width: 100%;
   margin-top: 18px;
+  padding: 8px;
+  background: transparent;
+  border: none;
   text-align: center;
   font-family: var(--font-mono);
   font-size: 11px;
@@ -908,6 +919,7 @@ button { font-family: inherit; }
   text-transform: uppercase;
   color: var(--camp-accent);
   text-decoration: none;
+  cursor: pointer;
   transition: opacity 200ms var(--ease);
 }
 
@@ -919,4 +931,54 @@ button { font-family: inherit; }
    with this override, not just the ones caught by testing. */
 .camp-claim-rewards[hidden] {
   display: none;
+}
+
+/* ===================== CLAIM DETAILS ===================== */
+.camp-claim-field {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  background: rgba(var(--camp-bone-rgb), 0.05);
+  border: 1px solid rgba(var(--camp-bone-rgb), 0.14);
+  border-radius: 6px;
+}
+
+.camp-claim-field__label {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--camp-tan);
+}
+
+.camp-claim-field__value {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--camp-bone);
+  word-break: break-all;
+  user-select: all;
+}
+
+/* Selectable on purpose — the manual fallback if the clipboard API and
+   execCommand are both unavailable. */
+.camp-claim-message {
+  margin: 0 0 16px;
+  padding: 14px;
+  max-height: 34vh;
+  overflow-y: auto;
+  background: rgba(var(--camp-bone-rgb), 0.05);
+  border: 1px solid rgba(var(--camp-bone-rgb), 0.14);
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--camp-bone);
+  white-space: pre-wrap;
+  word-break: break-word;
+  user-select: text;
 }
